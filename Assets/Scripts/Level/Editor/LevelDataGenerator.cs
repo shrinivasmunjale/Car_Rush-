@@ -23,16 +23,21 @@ namespace CarRush.EditorTools
             if (!Directory.Exists(OutputFolder))
                 AssetDatabase.CreateFolder("Assets/Settings", "LevelData");
 
-            CreateLevel(1, "Training Road",   "Level1", 120f, LevelDifficulty.Easy,      3);
-            CreateLevel(2, "City Drive",      "Level2", 110f, LevelDifficulty.Medium,    4);
-            CreateLevel(3, "Mountain Road",   "Level3", 100f, LevelDifficulty.Hard,      4);
-            CreateLevel(4, "Obstacle Race",   "Level4",  90f, LevelDifficulty.VeryHard,  5);
-            CreateLevel(5, "Final Race",      "Level5", 120f, LevelDifficulty.Extreme,   6);
+            CreateLevel(1,  "Training Road",       "Level1",  120f, LevelDifficulty.Easy,      3);
+            CreateLevel(2,  "City Drive",          "Level2",  110f, LevelDifficulty.Easy,      4);
+            CreateLevel(3,  "Mountain Road",       "Level3",  100f, LevelDifficulty.Medium,    4);
+            CreateLevel(4,  "Obstacle Race",       "Level4",   95f, LevelDifficulty.Medium,    5);
+            CreateLevel(5,  "Sunset Speedway",     "Level5",   90f, LevelDifficulty.Hard,      5);
+            CreateLevel(6,  "Desert Canyon",       "Level6",   85f, LevelDifficulty.Hard,      6);
+            CreateLevel(7,  "Stormy Ridge",        "Level7",   80f, LevelDifficulty.VeryHard,  6);
+            CreateLevel(8,  "Neon Metropolis",     "Level8",   75f, LevelDifficulty.VeryHard,  7);
+            CreateLevel(9,  "Inferno Circuit",     "Level9",   70f, LevelDifficulty.Extreme,   7);
+            CreateLevel(10, "Grand Championship",  "Level10",  65f, LevelDifficulty.Extreme,   8);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("[LevelDataGenerator] Created / updated 5 LevelData assets in " + OutputFolder);
+            Debug.Log("[LevelDataGenerator] Created / updated 10 LevelData assets in " + OutputFolder);
         }
 
         private static void CreateLevel(int number, string name, string scene,

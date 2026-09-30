@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 7e3812bf92b222c449784d90bf4c7580, type: 3}
-  m_Name: Level2
+  m_Name: Level10
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
-  levelNumber: 2
-  levelName: City Drive
-  sceneName: Level2
-  timeLimit: 110
-  difficulty: 0
-  checkpointCount: 4
+  levelNumber: 10
+  levelName: Grand Championship
+  sceneName: Level10
+  timeLimit: 65
+  difficulty: 4
+  checkpointCount: 8

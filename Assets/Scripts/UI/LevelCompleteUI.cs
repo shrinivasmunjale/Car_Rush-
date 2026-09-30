@@ -91,7 +91,7 @@ namespace CarRush.UI
             }
 
             int nextLvl = currentLvl + 1;
-            if (nextLvl <= 5)
+            if (nextLvl <= 10)
             {
                 GameStateManager.LoadLevel($"Level{nextLvl}");
             }

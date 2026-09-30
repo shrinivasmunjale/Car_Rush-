@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 4
   levelName: Obstacle Race
   sceneName: Level4
-  timeLimit: 90
-  difficulty: 3
+  timeLimit: 95
+  difficulty: 1
   checkpointCount: 5

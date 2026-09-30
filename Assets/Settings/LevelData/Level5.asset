@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level5
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 5
-  levelName: Final Race
+  levelName: Sunset Speedway
   sceneName: Level5
-  timeLimit: 120
-  difficulty: 4
-  checkpointCount: 6
+  timeLimit: 90
+  difficulty: 2
+  checkpointCount: 5

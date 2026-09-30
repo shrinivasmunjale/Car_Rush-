@@ -21,10 +21,10 @@ namespace CarRush.Editor
         [MenuItem("CarRush/Setup LevelSelect Scene UI", false, 2)]
         public static void BuildLevelSelectScene()
         {
-            // 1. Make sure the 5 LevelData assets exist.
+            // 1. Make sure all 10 LevelData assets exist.
             LevelDataGenerator.CreateLevelDataAssets();
-            LevelData[] levels = new LevelData[5];
-            for (int i = 1; i <= 5; i++)
+            LevelData[] levels = new LevelData[10];
+            for (int i = 1; i <= 10; i++)
             {
                 levels[i - 1] = AssetDatabase.LoadAssetAtPath<LevelData>("Assets/Settings/LevelData/Level" + i + ".asset");
             }
@@ -96,56 +96,84 @@ namespace CarRush.Editor
 
             // 8. Title "SELECT LEVEL".
             CreateLabel(canvasObj.transform, "TitleText",
-                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -90),
-                new Vector2(900, 90), "SELECT LEVEL", 56, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.84f, 0.2f, 1f));
+                new Vector2(0.5f, 1f), new Vector2(0.5f, 1f), new Vector2(0, -80),
+                new Vector2(900, 80), "SELECT LEVEL", 54, FontStyles.Bold, TextAlignmentOptions.Center, new Color(1f, 0.84f, 0.2f, 1f));
 
             // 9. Create (or load) the reusable level button prefab.
             LevelSelectButton buttonPrefab = CreateOrLoadButtonPrefab();
 
-            // 10. Level list container with a vertical layout.
-            GameObject containerObj = new GameObject("LevelList", typeof(RectTransform));
-            containerObj.transform.SetParent(canvasObj.transform, false);
-            RectTransform containerRt = containerObj.GetComponent<RectTransform>();
-            containerRt.anchorMin = new Vector2(0.5f, 0.5f);
-            containerRt.anchorMax = new Vector2(0.5f, 0.5f);
-            containerRt.pivot = new Vector2(0.5f, 0.5f);
-            containerRt.anchoredPosition = new Vector2(0, 10);
-            containerRt.sizeDelta = new Vector2(860, 520);
+            // 10. Level list container with two dedicated vertical columns (Left: 1..5, Right: 6..10)
+            GameObject columnsObj = new GameObject("LevelColumns", typeof(RectTransform), typeof(HorizontalLayoutGroup));
+            columnsObj.transform.SetParent(canvasObj.transform, false);
+            RectTransform colsRt = columnsObj.GetComponent<RectTransform>();
+            colsRt.anchorMin = new Vector2(0.5f, 0.5f);
+            colsRt.anchorMax = new Vector2(0.5f, 0.5f);
+            colsRt.pivot = new Vector2(0.5f, 0.5f);
+            colsRt.anchoredPosition = new Vector2(0, 25);
+            colsRt.sizeDelta = new Vector2(1240, 480);
 
-            VerticalLayoutGroup vlg = containerObj.AddComponent<VerticalLayoutGroup>();
-            vlg.childAlignment = TextAnchor.UpperCenter;
-            vlg.spacing = 16f;
-            vlg.childControlWidth = true;
-            vlg.childControlHeight = true;
-            vlg.childForceExpandWidth = true;
-            vlg.childForceExpandHeight = false;
+            HorizontalLayoutGroup hlg = columnsObj.GetComponent<HorizontalLayoutGroup>();
+            hlg.spacing = 32f;
+            hlg.childAlignment = TextAnchor.MiddleCenter;
+            hlg.childControlWidth = true;
+            hlg.childControlHeight = true;
+            hlg.childForceExpandWidth = true;
+            hlg.childForceExpandHeight = true;
 
-            // 11. BACK button (bottom).
+            // Left Column (Levels 1..5)
+            GameObject leftCol = new GameObject("LeftColumn", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            leftCol.transform.SetParent(columnsObj.transform, false);
+            VerticalLayoutGroup vlgL = leftCol.GetComponent<VerticalLayoutGroup>();
+            vlgL.spacing = 14f;
+            vlgL.childAlignment = TextAnchor.UpperCenter;
+            vlgL.childControlWidth = true;
+            vlgL.childControlHeight = false;
+            vlgL.childForceExpandWidth = true;
+            vlgL.childForceExpandHeight = false;
+
+            // Right Column (Levels 6..10)
+            GameObject rightCol = new GameObject("RightColumn", typeof(RectTransform), typeof(VerticalLayoutGroup));
+            rightCol.transform.SetParent(columnsObj.transform, false);
+            VerticalLayoutGroup vlgR = rightCol.GetComponent<VerticalLayoutGroup>();
+            vlgR.spacing = 14f;
+            vlgR.childAlignment = TextAnchor.UpperCenter;
+            vlgR.childControlWidth = true;
+            vlgR.childControlHeight = false;
+            vlgR.childForceExpandWidth = true;
+            vlgR.childForceExpandHeight = false;
+
+            // 11. Bottom Action Buttons (BACK & RESET PROGRESS).
             Button backBtn = CreateTextButton(canvasObj.transform, "BackButton", "BACK",
-                new Vector2(0, -420), new Color(0.25f, 0.28f, 0.35f, 1f));
+                new Vector2(-190, -425), new Color(0.25f, 0.28f, 0.35f, 1f));
+
+            Button resetBtn = CreateTextButton(canvasObj.transform, "ResetButton", "RESET PROGRESS",
+                new Vector2(190, -425), new Color(0.65f, 0.15f, 0.15f, 1f));
 
             // 12. Wire everything to LevelSelectUI.
             SerializedObject serializedUI = new SerializedObject(levelSelectUI);
             SerializedProperty levelsProp = serializedUI.FindProperty("levels");
-            levelsProp.arraySize = 5;
-            for (int i = 0; i < 5; i++)
+            levelsProp.arraySize = 10;
+            for (int i = 0; i < 10; i++)
                 levelsProp.GetArrayElementAtIndex(i).objectReferenceValue = levels[i];
 
             serializedUI.FindProperty("buttonPrefab").objectReferenceValue = buttonPrefab;
-            serializedUI.FindProperty("buttonContainer").objectReferenceValue = containerObj.transform;
+            serializedUI.FindProperty("leftContainer").objectReferenceValue = leftCol.transform;
+            serializedUI.FindProperty("rightContainer").objectReferenceValue = rightCol.transform;
+            serializedUI.FindProperty("buttonContainer").objectReferenceValue = columnsObj.transform;
             serializedUI.ApplyModifiedProperties();
 
-            // 13. Wire BACK button.
+            // 13. Wire Buttons.
             UnityEventTools.AddPersistentListener(backBtn.onClick, levelSelectUI.OnBackPressed);
+            UnityEventTools.AddPersistentListener(resetBtn.onClick, levelSelectUI.OnResetProgressPressed);
 
             // 14. Save scene.
             EditorSceneManager.MarkSceneDirty(EditorSceneManager.GetActiveScene());
             EditorSceneManager.SaveScene(EditorSceneManager.GetActiveScene());
 
-            Debug.Log("<color=green><b>[CarRush]</b> LevelSelect UI configured successfully and saved!</color>");
+            Debug.Log("<color=green><b>[CarRush]</b> LevelSelect UI configured with 10 levels and Reset Progress button!</color>");
             EditorUtility.DisplayDialog("CarRush Setup",
-                "LevelSelect UI has been created and wired up successfully!\n\n" +
-                "Level 1 is unlocked. Press Play (▶) to test the Level Select screen.", "Awesome!");
+                "LevelSelect UI has been created with all 10 Levels & Reset Progress button!\n\n" +
+                "Press Play (▶) to test.", "Awesome!");
         }
 
         /// <summary>Creates the reusable LevelSelectButton prefab asset.</summary>
@@ -157,14 +185,14 @@ namespace CarRush.Editor
                 AssetDatabase.CreateFolder("Assets/Prefabs", "UI");
             }
 
-            // Build a clean hierarchy for the row
+            // Build a clean hierarchy for the row (570 wide x 80 high in grid)
             GameObject root = new GameObject("LevelSelectButton", typeof(RectTransform), typeof(Image), typeof(Button), typeof(LayoutElement));
             RectTransform rt = root.GetComponent<RectTransform>();
-            rt.sizeDelta = new Vector2(820, 84);
+            rt.sizeDelta = new Vector2(570, 80);
 
             LayoutElement le = root.GetComponent<LayoutElement>();
-            le.minHeight = 84f;
-            le.preferredHeight = 84f;
+            le.minHeight = 80f;
+            le.preferredHeight = 80f;
             le.flexibleWidth = 1f;
 
             Image img = root.GetComponent<Image>();
@@ -179,20 +207,20 @@ namespace CarRush.Editor
             cb.disabledColor = new Color(0.12f, 0.14f, 0.18f, 0.6f);
             btn.colors = cb;
 
-            // 1. Number Label (Left aligned)
+            // 1. Number Label (Left: x = 15 to 135)
             TextMeshProUGUI number = CreateLabel(root.transform, "NumberText",
-                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(90, 0),
-                new Vector2(150, 60), "LEVEL 1", 28, FontStyles.Bold, TextAlignmentOptions.Left, new Color(1f, 0.84f, 0.2f));
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(75, 0),
+                new Vector2(110, 50), "LEVEL 1", 22, FontStyles.Bold, TextAlignmentOptions.Left, new Color(1f, 0.84f, 0.2f));
 
-            // 2. Name Label (Center / left-mid)
+            // 2. Name Label (Middle: x = 145 to 420)
             TextMeshProUGUI name = CreateLabel(root.transform, "NameText",
-                new Vector2(0.5f, 0.5f), new Vector2(0.5f, 0.5f), new Vector2(-20, 0),
-                new Vector2(380, 60), "Training Road", 30, FontStyles.Bold, TextAlignmentOptions.Left, Color.white);
+                new Vector2(0f, 0.5f), new Vector2(0f, 0.5f), new Vector2(280, 0),
+                new Vector2(270, 50), "Training Road", 22, FontStyles.Bold, TextAlignmentOptions.Left, Color.white);
 
-            // 3. Info / Lock Label (Right aligned)
+            // 3. Info / Lock Label (Right: x = 430 to 555)
             TextMeshProUGUI info = CreateLabel(root.transform, "InfoText",
-                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-110, 0),
-                new Vector2(200, 60), "★ EASY", 22, FontStyles.Bold, TextAlignmentOptions.Right, new Color(0.3f, 0.9f, 0.4f));
+                new Vector2(1f, 0.5f), new Vector2(1f, 0.5f), new Vector2(-70, 0),
+                new Vector2(115, 50), "EASY", 19, FontStyles.Bold, TextAlignmentOptions.Right, new Color(0.3f, 0.9f, 0.4f));
 
             // Add the LevelSelectButton component and wire its serialized fields.
             LevelSelectButton row = root.AddComponent<LevelSelectButton>();

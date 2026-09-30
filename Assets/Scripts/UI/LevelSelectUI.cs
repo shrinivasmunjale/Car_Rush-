@@ -21,31 +21,27 @@ namespace CarRush.UI
     public class LevelSelectUI : MonoBehaviour
     {
         [Header("Data")]
-        [Tooltip("All 5 LevelData assets, in level order (1..5).")]
+        [Tooltip("All LevelData assets in level order (1..10).")]
         [SerializeField] private LevelData[] levels;
 
         [Header("UI")]
         [Tooltip("Reusable button row prefab (has a LevelSelectButton component).")]
         [SerializeField] private LevelSelectButton buttonPrefab;
 
-        [Tooltip("Transform the spawned rows are parented under (a vertical layout group works nicely).")]
+        [Tooltip("Transform the spawned rows are parented under (or fallback).")]
         [SerializeField] private Transform buttonContainer;
+
+        [Tooltip("Optional Left column (for Levels 1..5).")]
+        [SerializeField] private Transform leftContainer;
+
+        [Tooltip("Optional Right column (for Levels 6..10).")]
+        [SerializeField] private Transform rightContainer;
 
         private readonly List<LevelSelectButton> spawnedButtons = new List<LevelSelectButton>();
 
         private void Awake()
         {
-#if UNITY_EDITOR
-            // Safety fallback: if levels array has missing references, auto-fill from Assets
-            if (levels == null || levels.Length < 5 || levels[0] == null)
-            {
-                levels = new LevelData[5];
-                for (int i = 1; i <= 5; i++)
-                {
-                    levels[i - 1] = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelData>($"Assets/Settings/LevelData/Level{i}.asset");
-                }
-            }
-#endif
+            EnsureLevelsLoaded();
         }
 
         private void Start()
@@ -57,8 +53,35 @@ namespace CarRush.UI
             BuildList();
         }
 
-        private void BuildList()
+        private void EnsureLevelsLoaded()
         {
+#if UNITY_EDITOR
+            if (levels == null || levels.Length < 10 || HasNullOrEmpty(levels))
+            {
+                List<LevelData> lvlList = new List<LevelData>();
+                for (int i = 1; i <= 10; i++)
+                {
+                    LevelData ld = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelData>($"Assets/Settings/LevelData/Level{i}.asset");
+                    if (ld != null) lvlList.Add(ld);
+                }
+                if (lvlList.Count > 0) levels = lvlList.ToArray();
+            }
+#endif
+        }
+
+        private bool HasNullOrEmpty(LevelData[] array)
+        {
+            if (array == null || array.Length == 0) return true;
+            for (int i = 0; i < array.Length; i++)
+            {
+                if (array[i] == null) return true;
+            }
+            return false;
+        }
+
+        public void BuildList()
+        {
+            EnsureLevelsLoaded();
             ClearList();
 
             if (levels == null || levels.Length == 0)
@@ -67,20 +90,25 @@ namespace CarRush.UI
                 return;
             }
 
-            foreach (LevelData data in levels)
+            for (int i = 0; i < levels.Length; i++)
             {
-                if (data == null)
-                    continue;
+                LevelData data = levels[i];
+                if (data == null) continue;
+
+                // Pick container: Left for 1..5, Right for 6..10
+                Transform parent = buttonContainer;
+                if (leftContainer != null && rightContainer != null)
+                {
+                    parent = (i < 5) ? leftContainer : rightContainer;
+                }
 
                 bool unlocked = SaveManager.IsLevelUnlocked(data.levelNumber);
 
-                LevelSelectButton row = Instantiate(buttonPrefab, buttonContainer);
+                LevelSelectButton row = Instantiate(buttonPrefab, parent);
                 row.Setup(data, unlocked);
 
                 if (unlocked)
                 {
-                    // Capture the level in a local so the lambda remembers which
-                    // level this specific row belongs to.
                     LevelData captured = data;
                     row.GetComponent<Button>().onClick.AddListener(() =>
                     {
@@ -92,12 +120,11 @@ namespace CarRush.UI
                 spawnedButtons.Add(row);
             }
 
-            // Force layout rebuild so all 5 rows immediately arrange with correct spacing
-            if (buttonContainer is RectTransform rt)
-            {
-                Canvas.ForceUpdateCanvases();
-                LayoutRebuilder.ForceRebuildLayoutImmediate(rt);
-            }
+            // Force layout rebuild
+            Canvas.ForceUpdateCanvases();
+            if (leftContainer is RectTransform lrt) LayoutRebuilder.ForceRebuildLayoutImmediate(lrt);
+            if (rightContainer is RectTransform rrt) LayoutRebuilder.ForceRebuildLayoutImmediate(rrt);
+            if (buttonContainer is RectTransform brt) LayoutRebuilder.ForceRebuildLayoutImmediate(brt);
         }
 
         private void ClearList()
@@ -108,6 +135,14 @@ namespace CarRush.UI
                     Destroy(row.gameObject);
             }
             spawnedButtons.Clear();
+        }
+
+        /// <summary>Resets player progression back to Level 1 and refreshes the UI instantly.</summary>
+        public void OnResetProgressPressed()
+        {
+            SaveManager.ResetProgress();
+            BuildList();
+            Debug.Log("<color=yellow><b>[LevelSelectUI] Progression reset! Only Level 1 is unlocked.</b></color>");
         }
 
         /// <summary>Wired to the BACK button's OnClick().</summary>

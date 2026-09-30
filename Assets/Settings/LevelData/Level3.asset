@@ -16,5 +16,5 @@ MonoBehaviour:
   levelName: Mountain Road
   sceneName: Level3
   timeLimit: 100
-  difficulty: 2
+  difficulty: 1
   checkpointCount: 4

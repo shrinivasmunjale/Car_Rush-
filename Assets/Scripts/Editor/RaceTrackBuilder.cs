@@ -19,7 +19,7 @@ namespace CarRush.Editor
 {
     public static class RaceTrackBuilder
     {
-        [MenuItem("CarRush/Build All 5 Race Levels & Register Scenes", false, 3)]
+        [MenuItem("CarRush/Build All 10 Race Levels & Register Scenes", false, 3)]
         public static void BuildAllLevels()
         {
             // Ensure LevelData assets & Car Prefab exist
@@ -37,12 +37,14 @@ namespace CarRush.Editor
             Material cpMat = CreateMaterial("CheckpointGlow", new Color(0.2f, 0.8f, 1f, 0.6f), 0.9f);
             Material finishMat = CreateMaterial("FinishArch", new Color(1f, 0.85f, 0.1f), 0.9f);
 
-            // Generate tracks for Levels 1..5
-            BuildLevelScene(1, "Level1", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
-            BuildLevelScene(2, "Level2", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
-            BuildLevelScene(3, "Level3", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
-            BuildLevelScene(4, "Level4", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
-            BuildLevelScene(5, "Level5", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
+            // Generate tracks for Levels 1..10
+            for (int i = 1; i <= 10; i++)
+            {
+                BuildLevelScene(i, $"Level{i}", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
+            }
+
+            // Also build/update LevelSelect scene with 10 level buttons & reset button
+            LevelSelectBuilder.BuildLevelSelectScene();
 
             // Register all scenes in Build Settings
             RegisterAllScenesInBuildSettings();
@@ -50,8 +52,8 @@ namespace CarRush.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("<color=green><b>[CarRush]</b> All 5 Level scenes successfully generated and registered in Build Settings!</color>");
-            EditorUtility.DisplayDialog("CarRush Builder", "All 5 Race Levels and the Player Car have been built and registered!\n\nYou can now test the full game from MainMenu!", "Awesome!");
+            Debug.Log("<color=green><b>[CarRush]</b> All 10 Level scenes & obstacles successfully generated and registered in Build Settings!</color>");
+            EditorUtility.DisplayDialog("CarRush Builder", "All 10 Race Levels with Road Obstacles, Advertisement Boards, and Level Select have been built and registered!\n\nYou can now test the full game!", "Awesome!");
         }
 
         private static void BuildLevelScene(int levelNum, string sceneName, Material roadMat, Material curbMat, Material barrierMat, Material cpMat, Material finishMat, GameObject carPrefab)
@@ -63,7 +65,10 @@ namespace CarRush.Editor
             Light dirLight = Object.FindAnyObjectByType<Light>();
             if (dirLight != null)
             {
-                dirLight.color = new Color(1f, 0.95f, 0.88f);
+                // Unique sky lighting tone per level group
+                if (levelNum <= 3) dirLight.color = new Color(1f, 0.95f, 0.88f); // Day
+                else if (levelNum <= 6) dirLight.color = new Color(1f, 0.8f, 0.6f); // Sunset
+                else dirLight.color = new Color(0.8f, 0.85f, 1f); // Dusk / High speed
                 dirLight.intensity = 1.2f;
                 dirLight.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
             }
@@ -86,12 +91,14 @@ namespace CarRush.Editor
                 CreateRoadSegment(trackRoot.transform, pA, pB, roadMat, curbMat, barrierMat);
             }
 
+            // Spawn Road Obstacles based on level difficulty
+            SpawnTrackObstacles(trackRoot.transform, trackNodes, levelNum);
+
             // Place Ad Billboards along the roadside
             AdBillboardBuilder.PlaceBillboardsInOpenScene();
 
-
             // Create Checkpoints
-            int cpCount = levelData != null ? levelData.checkpointCount : 3;
+            int cpCount = levelData != null ? levelData.checkpointCount : (3 + levelNum / 2);
             float step = (float)(trackNodes.Count - 2) / (cpCount + 1);
             for (int i = 1; i <= cpCount; i++)
             {
@@ -159,20 +166,92 @@ namespace CarRush.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
         }
 
+        private static void SpawnTrackObstacles(Transform parent, List<Vector3> trackNodes, int level)
+        {
+            if (level <= 1) return; // Level 1 is obstacle-free training
+
+            GameObject obsRoot = new GameObject("Obstacles");
+            obsRoot.transform.SetParent(parent, false);
+
+            int totalNodes = trackNodes.Count - 1;
+            // More obstacles at higher levels
+            int obstacleClusters = Mathf.Min(3 + level * 2, totalNodes / 2);
+            int step = Mathf.Max(2, totalNodes / obstacleClusters);
+
+            for (int i = 2; i < totalNodes - 1; i += step)
+            {
+                Vector3 pA = trackNodes[i];
+                Vector3 pB = trackNodes[i + 1];
+                Vector3 fwd = (pB - pA).normalized;
+                Vector3 right = Vector3.Cross(Vector3.up, fwd).normalized;
+                Vector3 mid = (pA + pB) * 0.5f;
+                Quaternion rot = Quaternion.LookRotation(fwd, Vector3.up);
+
+                // Determine hazard type based on level
+                if (level == 2 || level == 3)
+                {
+                    // Cones on alternating lane sides
+                    float offset = (i % 2 == 0) ? -3.5f : 3.5f;
+                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * offset);
+                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * (offset + 1.2f));
+                }
+                else if (level == 4 || level == 5)
+                {
+                    // Hazard Barrels and cones
+                    float offset = (i % 2 == 0) ? -2.5f : 2.5f;
+                    ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * offset);
+                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * (offset + ((offset > 0) ? -1.5f : 1.5f)));
+                }
+                else if (level >= 6 && level <= 8)
+                {
+                    // Chicanes and double hazard barrels
+                    if (i % (step * 2) == 0)
+                    {
+                        float laneSide = (i % 4 == 0) ? -2.5f : 2.5f;
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, laneSide);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * -3f);
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * 3f);
+                    }
+                }
+                else // Level 9 & 10 Extreme Master Obstacles
+                {
+                    if (i % 3 == 0)
+                    {
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, -2.5f);
+                    }
+                    else if (i % 3 == 1)
+                    {
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, 2.5f);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * -2f);
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * 2f);
+                        ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid);
+                    }
+                }
+            }
+        }
+
         private static List<Vector3> GenerateTrackNodes(int level)
         {
             List<Vector3> nodes = new List<Vector3>();
-            int segments = 12 + level * 4;
-            float radius = 70f + level * 20f;
+            int segments = 14 + level * 3;
+            float radius = 65f + level * 12f;
 
             for (int i = 0; i < segments; i++)
             {
                 float angle = (float)i / segments * Mathf.PI * 2f;
-                // Add varied curviness per level
-                float r = radius + Mathf.Sin(angle * (2 + level)) * (15f + level * 5f);
+                // Rich varied track curvature per level
+                float waveFactor = (level % 2 == 0) ? (3 + level) : (2 + level);
+                float r = radius + Mathf.Sin(angle * waveFactor) * (14f + level * 3.5f) + Mathf.Cos(angle * 2f) * (8f + level * 2f);
                 float x = Mathf.Cos(angle) * r;
                 float z = Mathf.Sin(angle) * r;
-                float y = Mathf.Sin(angle * 3f) * (level > 2 ? 4f : 0f); // Hill elevation for higher levels
+                // Hill elevation with varying undulations
+                float y = (level >= 3) ? (Mathf.Sin(angle * 4f) * (3f + level * 1.2f)) : 0f;
 
                 nodes.Add(new Vector3(x, y, z));
             }
@@ -437,7 +516,12 @@ namespace CarRush.Editor
                 "Assets/Scenes/Level2.unity",
                 "Assets/Scenes/Level3.unity",
                 "Assets/Scenes/Level4.unity",
-                "Assets/Scenes/Level5.unity"
+                "Assets/Scenes/Level5.unity",
+                "Assets/Scenes/Level6.unity",
+                "Assets/Scenes/Level7.unity",
+                "Assets/Scenes/Level8.unity",
+                "Assets/Scenes/Level9.unity",
+                "Assets/Scenes/Level10.unity"
             };
 
             List<EditorBuildSettingsScene> buildScenes = new List<EditorBuildSettingsScene>();

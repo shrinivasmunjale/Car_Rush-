@@ -62,6 +62,7 @@
     <Compile Include="Assets\Scripts\UI\MainMenuUI.cs" />
     <Compile Include="Assets\Scripts\UI\HUDUI.cs" />
     <Compile Include="Assets\Scripts\UI\LevelSelectUI.cs" />
+    <Compile Include="Assets\Scripts\Game\ObstacleHazard.cs" />
     <Compile Include="Assets\Scripts\UI\SettingsUI.cs" />
     <Compile Include="Assets\Scripts\UI\PauseMenuUI.cs" />
   </ItemGroup>

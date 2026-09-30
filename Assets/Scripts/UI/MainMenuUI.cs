@@ -29,13 +29,25 @@ namespace CarRush.UI
         }
 
         /// <summary>Wired to the PLAY button's OnClick().</summary>
-        public void OnPlayPressed() => GameStateManager.LoadLevelSelect();
+        public void OnPlayPressed()
+        {
+            Debug.Log("<color=green>[MainMenuUI] PLAY Button Clicked! Attempting to load LevelSelect...</color>");
+            GameStateManager.LoadLevelSelect();
+        }
 
         /// <summary>Wired to the SETTINGS button's OnClick().</summary>
-        public void OnSettingsPressed() => ToggleSettingsPanel();
+        public void OnSettingsPressed()
+        {
+            Debug.Log("[MainMenuUI] SETTINGS Button Clicked!");
+            ToggleSettingsPanel();
+        }
 
         /// <summary>Wired to the EXIT button's OnClick().</summary>
-        public void OnExitPressed() => GameStateManager.QuitGame();
+        public void OnExitPressed()
+        {
+            Debug.Log("[MainMenuUI] EXIT Button Clicked! Stopping Play mode / Quitting...");
+            GameStateManager.QuitGame();
+        }
 
         private void ToggleSettingsPanel()
         {

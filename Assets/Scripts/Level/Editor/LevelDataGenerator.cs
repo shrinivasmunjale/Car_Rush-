@@ -23,16 +23,16 @@ namespace CarRush.EditorTools
             if (!Directory.Exists(OutputFolder))
                 AssetDatabase.CreateFolder("Assets/Settings", "LevelData");
 
-            CreateLevel(1,  "Training Road",       "Level1",  120f, LevelDifficulty.Easy,      3);
-            CreateLevel(2,  "City Drive",          "Level2",  110f, LevelDifficulty.Easy,      4);
-            CreateLevel(3,  "Mountain Road",       "Level3",  100f, LevelDifficulty.Medium,    4);
-            CreateLevel(4,  "Obstacle Race",       "Level4",   95f, LevelDifficulty.Medium,    5);
-            CreateLevel(5,  "Sunset Speedway",     "Level5",   90f, LevelDifficulty.Hard,      5);
-            CreateLevel(6,  "Desert Canyon",       "Level6",   85f, LevelDifficulty.Hard,      6);
-            CreateLevel(7,  "Stormy Ridge",        "Level7",   80f, LevelDifficulty.VeryHard,  6);
-            CreateLevel(8,  "Neon Metropolis",     "Level8",   75f, LevelDifficulty.VeryHard,  7);
-            CreateLevel(9,  "Inferno Circuit",     "Level9",   70f, LevelDifficulty.Extreme,   7);
-            CreateLevel(10, "Grand Championship",  "Level10",  65f, LevelDifficulty.Extreme,   8);
+            CreateLevel(1,  "Training Road",       "Level1",   85f, LevelDifficulty.Easy,      3);
+            CreateLevel(2,  "City Dawn",           "Level2",   75f, LevelDifficulty.Easy,      4);
+            CreateLevel(3,  "Mountain Mist",       "Level3",   70f, LevelDifficulty.Medium,    4);
+            CreateLevel(4,  "Desert Hazard",       "Level4",   65f, LevelDifficulty.Medium,    5);
+            CreateLevel(5,  "Sunset Speedway",     "Level5",   60f, LevelDifficulty.Hard,      5);
+            CreateLevel(6,  "Scorched Canyon",     "Level6",   55f, LevelDifficulty.Hard,      6);
+            CreateLevel(7,  "Stormy Ridge",        "Level7",   50f, LevelDifficulty.VeryHard,  6);
+            CreateLevel(8,  "Cyber Metropolis",    "Level8",   46f, LevelDifficulty.VeryHard,  7);
+            CreateLevel(9,  "Inferno Circuit",     "Level9",   42f, LevelDifficulty.Extreme,   7);
+            CreateLevel(10, "Grand Championship",  "Level10",  38f, LevelDifficulty.Extreme,   8);
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();

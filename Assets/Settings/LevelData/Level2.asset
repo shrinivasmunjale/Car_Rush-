@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level2
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 2
-  levelName: City Drive
+  levelName: City Dawn
   sceneName: Level2
-  timeLimit: 110
+  timeLimit: 75
   difficulty: 0
   checkpointCount: 4

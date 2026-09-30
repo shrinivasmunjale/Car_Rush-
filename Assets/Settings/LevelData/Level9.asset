@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 9
   levelName: Inferno Circuit
   sceneName: Level9
-  timeLimit: 70
+  timeLimit: 42
   difficulty: 4
   checkpointCount: 7

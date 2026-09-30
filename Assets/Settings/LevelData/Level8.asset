@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level8
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 8
-  levelName: Neon Metropolis
+  levelName: Cyber Metropolis
   sceneName: Level8
-  timeLimit: 75
+  timeLimit: 46
   difficulty: 3
   checkpointCount: 7

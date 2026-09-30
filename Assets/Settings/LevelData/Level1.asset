@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 1
   levelName: Training Road
   sceneName: Level1
-  timeLimit: 120
+  timeLimit: 85
   difficulty: 0
   checkpointCount: 3

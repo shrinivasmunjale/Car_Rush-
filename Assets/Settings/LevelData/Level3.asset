@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level3
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 3
-  levelName: Mountain Road
+  levelName: Mountain Mist
   sceneName: Level3
-  timeLimit: 100
+  timeLimit: 70
   difficulty: 1
   checkpointCount: 4

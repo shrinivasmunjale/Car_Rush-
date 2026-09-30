@@ -37,13 +37,13 @@ namespace CarRush.Game
 
         [Header("Respawn & Fall Thresholds")]
         [Tooltip("Absolute Y below which car always respawns.")]
-        [SerializeField] private float fallThresholdY = -12f;
+        [SerializeField] private float fallThresholdY = -40f;
 
         [Tooltip("Max vertical drop below last checkpoint height before auto-respawning.")]
-        [SerializeField] private float maxVerticalDropBelowCheckpoint = 12f;
+        [SerializeField] private float maxVerticalDropBelowCheckpoint = 50f;
 
         [Tooltip("Time in seconds upside-down before auto-respawning.")]
-        [SerializeField] private float upsideDownRespawnTime = 2.0f;
+        [SerializeField] private float upsideDownRespawnTime = 2.5f;
 
         // State
         public RaceState CurrentState { get; private set; } = RaceState.Countdown;
@@ -179,21 +179,16 @@ namespace CarRush.Game
                 Vector3 toCar = playerCar.transform.position - startSpawnPosition;
                 float forwardDot = Vector3.Dot(toCar, startSpawnForward);
 
-                // If car moved behind start point
-                if (forwardDot < -0.3f)
+                // If player attempts to reverse backwards past the start line
+                if (forwardDot < -4.0f)
                 {
-                    // Push car back in front of start line
-                    Vector3 correctedPos = startSpawnPosition + Vector3.ProjectOnPlane(toCar, startSpawnForward);
-                    playerCar.transform.position = correctedPos;
-
-                    // Stop backward velocity
                     Rigidbody rb = playerCar.Rigidbody;
                     if (rb != null)
                     {
                         float velocityAlongForward = Vector3.Dot(rb.linearVelocity, startSpawnForward);
                         if (velocityAlongForward < 0f)
                         {
-                            rb.linearVelocity = Vector3.ProjectOnPlane(rb.linearVelocity, startSpawnForward);
+                            rb.linearVelocity = Vector3.zero;
                             rb.angularVelocity = Vector3.zero;
                         }
                     }
@@ -201,39 +196,79 @@ namespace CarRush.Game
             }
         }
 
+        private float offRoadTimer = 0f;
+        private float respawnGraceTimer = 0f;
+
         /// <summary>
-        /// Checks fall distance thresholds and upside-down state.
+        /// Checks if car has driven outside the road boundaries, fallen off the track, or rolled upside-down.
         /// </summary>
         private void CheckFallAndOffTrack()
         {
-            if (isFinished) return;
+            if (isFinished || playerCar == null) return;
+
+            // During respawn grace period (1.2s), pause all off-road and fall checks so car settles smoothly on the road
+            if (respawnGraceTimer > 0f)
+            {
+                respawnGraceTimer -= Time.deltaTime;
+                offRoadTimer = 0f;
+                upsideDownTimer = 0f;
+                return;
+            }
+
             Vector3 carPos = playerCar.transform.position;
 
-            // 1. Fall below absolute Y (fell off elevated track or cliff)
-            if (carPos.y < fallThresholdY)
+            // 1. Extreme vertical drop below absolute bottom floor or checkpoint height
+            if (carPos.y < fallThresholdY || carPos.y < lastRespawnPosition.y - 15f)
             {
-                Debug.Log("[RaceManager] Car fell below track floor. Respawning...");
+                Debug.Log("[RaceManager] Car fell off the track. Instant respawn at last checkpoint...");
                 RespawnCar();
                 return;
             }
 
-            // 2. Large vertical drop below last checkpoint height
-            if (carPos.y < lastRespawnPosition.y - maxVerticalDropBelowCheckpoint)
+            // 2. Downward road surface raycast check
+            bool isOverRoad = false;
+            Vector3 rayOrigin = carPos + Vector3.up * 0.8f;
+            RaycastHit[] hits = Physics.RaycastAll(rayOrigin, Vector3.down, 4.5f);
+            foreach (var h in hits)
             {
-                Debug.Log($"[RaceManager] Car dropped {lastRespawnPosition.y - carPos.y:F1}m below checkpoint. Respawning...");
-                RespawnCar();
-                return;
+                if (h.collider != null && !h.collider.isTrigger)
+                {
+                    string colName = h.collider.name.ToLowerInvariant();
+                    // Road segments, curbs, roadblocks belong to track
+                    if (colName.Contains("road") || colName.Contains("curb") || colName.Contains("track") ||
+                        (h.collider.transform.parent != null && h.collider.transform.parent.name.ToLowerInvariant().Contains("track")))
+                    {
+                        isOverRoad = true;
+                        break;
+                    }
+                }
             }
 
-            // 3. Upside down / rolled over for > 2 seconds
+            // If car leaves the road completely (flies off or drives outside into void)
+            if (!isOverRoad)
+            {
+                offRoadTimer += Time.deltaTime;
+                // Fast 0.45s response: respawns immediately without long fall delay
+                if (offRoadTimer >= 0.45f)
+                {
+                    Debug.Log("[RaceManager] Car went outside the road! Instant respawn at last checkpoint...");
+                    RespawnCar();
+                    return;
+                }
+            }
+            else
+            {
+                offRoadTimer = 0f;
+            }
+
+            // 3. Upside down / rolled over on roof for > 1.5 seconds
             if (Vector3.Dot(playerCar.transform.up, Vector3.up) < 0.15f)
             {
                 upsideDownTimer += Time.deltaTime;
-                if (upsideDownTimer >= upsideDownRespawnTime)
+                if (upsideDownTimer >= 1.5f)
                 {
-                    Debug.Log("[RaceManager] Car rolled upside down. Respawning...");
+                    Debug.Log("[RaceManager] Car rolled upside down. Respawning at last checkpoint...");
                     RespawnCar();
-                    upsideDownTimer = 0f;
                     return;
                 }
             }
@@ -250,7 +285,8 @@ namespace CarRush.Game
             if (cp.CheckpointIndex == CurrentCheckpointIndex)
             {
                 cp.SetPassed(true);
-                lastRespawnPosition = cp.transform.position + Vector3.up * 0.5f;
+                // Checkpoint transform is at pos + 2.5f; place respawn directly on the road surface (0.35m above asphalt)
+                lastRespawnPosition = cp.transform.position - Vector3.up * 2.15f;
                 lastRespawnRotation = cp.transform.rotation;
 
                 CurrentCheckpointIndex++;
@@ -337,8 +373,10 @@ namespace CarRush.Game
             if (playerCar != null && !isFinished)
             {
                 playerCar.ResetToPose(lastRespawnPosition, lastRespawnRotation);
+                offRoadTimer = 0f;
                 upsideDownTimer = 0f;
-                Debug.Log("[RaceManager] Car respawned at last checkpoint.");
+                respawnGraceTimer = 1.2f;
+                Debug.Log("[RaceManager] Car respawned safely on road at last checkpoint.");
             }
         }
 

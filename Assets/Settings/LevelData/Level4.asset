@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level4
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 4
-  levelName: Obstacle Race
+  levelName: Desert Hazard
   sceneName: Level4
-  timeLimit: 95
+  timeLimit: 65
   difficulty: 1
   checkpointCount: 5

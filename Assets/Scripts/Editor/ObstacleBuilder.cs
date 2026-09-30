@@ -144,6 +144,83 @@ namespace CarRush.Editor
             return barrel;
         }
 
+        public static GameObject CreateSolidConcreteBarrier(Transform parent, Vector3 pos, Quaternion rot, float laneOffset, float length = 4.5f)
+        {
+            EnsureMaterials();
+            GameObject barrier = new GameObject("SolidConcreteBarrier");
+            if (parent != null) barrier.transform.SetParent(parent, true);
+            barrier.transform.position = pos + rot * new Vector3(laneOffset, 0.6f, 0);
+            barrier.transform.rotation = rot;
+
+            // Concrete body
+            GameObject block = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            block.name = "ConcreteWall";
+            block.transform.SetParent(barrier.transform, false);
+            block.transform.localPosition = Vector3.zero;
+            block.transform.localScale = new Vector3(length, 1.2f, 0.9f);
+            block.GetComponent<MeshRenderer>().material = barrierMat;
+            Object.DestroyImmediate(block.GetComponent<Collider>());
+
+            // Yellow hazard caution top
+            GameObject topHazard = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            topHazard.name = "HazardCautionStripe";
+            topHazard.transform.SetParent(barrier.transform, false);
+            topHazard.transform.localPosition = new Vector3(0, 0.65f, 0);
+            topHazard.transform.localScale = new Vector3(length + 0.1f, 0.25f, 0.95f);
+            topHazard.GetComponent<MeshRenderer>().material = barrelYellowMat;
+            Object.DestroyImmediate(topHazard.GetComponent<Collider>());
+
+            // Solid impenetrable box collider
+            BoxCollider col = barrier.AddComponent<BoxCollider>();
+            col.size = new Vector3(length, 1.5f, 1.0f);
+
+            Rigidbody rb = barrier.AddComponent<Rigidbody>();
+            rb.isKinematic = true; // Solid stationary barrier (car cannot pass through)
+
+            ObstacleHazard haz = barrier.AddComponent<ObstacleHazard>();
+            SerializedObject so = new SerializedObject(haz);
+            so.FindProperty("obstacleType").enumValueIndex = (int)ObstacleType.RoadBlockBarrier;
+            so.FindProperty("speedPenaltyFraction").floatValue = 0.5f;
+            so.ApplyModifiedProperties();
+
+            return barrier;
+        }
+
+        public static GameObject CreateTireWallBarrier(Transform parent, Vector3 pos, Quaternion rot, float laneOffset)
+        {
+            EnsureMaterials();
+            GameObject tireWall = new GameObject("SolidTireWall");
+            if (parent != null) tireWall.transform.SetParent(parent, true);
+            tireWall.transform.position = pos + rot * new Vector3(laneOffset, 0.5f, 0);
+            tireWall.transform.rotation = rot;
+
+            // 3 Stacked tire cylinders
+            for (int i = -1; i <= 1; i++)
+            {
+                GameObject tire = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
+                tire.name = $"TireStack_{i + 1}";
+                tire.transform.SetParent(tireWall.transform, false);
+                tire.transform.localPosition = new Vector3(i * 1.0f, 0, 0);
+                tire.transform.localScale = new Vector3(0.9f, 0.5f, 0.9f);
+                tire.GetComponent<MeshRenderer>().material = barrelBlackMat;
+                Object.DestroyImmediate(tire.GetComponent<Collider>());
+            }
+
+            BoxCollider col = tireWall.AddComponent<BoxCollider>();
+            col.size = new Vector3(3.2f, 1.2f, 1.1f);
+
+            Rigidbody rb = tireWall.AddComponent<Rigidbody>();
+            rb.isKinematic = true; // Solid impact wall
+
+            ObstacleHazard haz = tireWall.AddComponent<ObstacleHazard>();
+            SerializedObject so = new SerializedObject(haz);
+            so.FindProperty("obstacleType").enumValueIndex = (int)ObstacleType.HazardBarrel;
+            so.FindProperty("speedPenaltyFraction").floatValue = 0.35f;
+            so.ApplyModifiedProperties();
+
+            return tireWall;
+        }
+
         public static GameObject CreateRoadBlockChicane(Transform parent, Vector3 pos, Quaternion rot, float laneOffset)
         {
             EnsureMaterials();

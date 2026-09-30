@@ -70,7 +70,7 @@ namespace CarRush.Car
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
-            rb.centerOfMass += centerOfMassOffset;
+            rb.centerOfMass = centerOfMassOffset;
         }
 
         private void Update()
@@ -90,8 +90,8 @@ namespace CarRush.Car
 
         private void ReadInput()
         {
-            float steer = 0f;
-            float throttle = 0f;
+            float targetSteer = 0f;
+            float targetThrottle = 0f;
             bool handbrake = false;
 
 #if ENABLE_INPUT_SYSTEM
@@ -100,27 +100,31 @@ namespace CarRush.Car
 
             if (keyboard != null)
             {
-                if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) throttle += 1f;
-                if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) throttle -= 1f;
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) steer += 1f;
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) steer -= 1f;
+                if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) targetThrottle += 1f;
+                if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) targetThrottle -= 1f;
+                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) targetSteer += 1f;
+                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) targetSteer -= 1f;
                 if (keyboard.spaceKey.isPressed) handbrake = true;
             }
 
             if (gamepad != null)
             {
-                throttle += gamepad.rightTrigger.ReadValue() - gamepad.leftTrigger.ReadValue();
-                steer += gamepad.leftStick.x.ReadValue();
+                targetThrottle += gamepad.rightTrigger.ReadValue() - gamepad.leftTrigger.ReadValue();
+                targetSteer += gamepad.leftStick.x.ReadValue();
                 if (gamepad.buttonSouth.isPressed) handbrake = true;
             }
 #else
-            steer = Input.GetAxis("Horizontal");
-            throttle = Input.GetAxis("Vertical");
+            targetSteer = Input.GetAxis("Horizontal");
+            targetThrottle = Input.GetAxis("Vertical");
             handbrake = Input.GetKey(KeyCode.Space);
 #endif
 
-            currentSteerInput = Mathf.Clamp(steer, -1f, 1f);
-            currentThrottleInput = Mathf.Clamp(throttle, -1f, 1f);
+            targetSteer = Mathf.Clamp(targetSteer, -1f, 1f);
+            targetThrottle = Mathf.Clamp(targetThrottle, -1f, 1f);
+
+            // Smoothly interpolate steering with fast, responsive auto-centering (prevents pulling or sticking)
+            currentSteerInput = Mathf.MoveTowards(currentSteerInput, targetSteer, Time.deltaTime * 12f);
+            currentThrottleInput = targetThrottle;
             isHandbraking = handbrake;
         }
 

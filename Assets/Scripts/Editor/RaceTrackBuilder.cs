@@ -19,6 +19,56 @@ namespace CarRush.Editor
 {
     public static class RaceTrackBuilder
     {
+        [MenuItem("CarRush/Build Level 3 Map", false, 2)]
+        public static void BuildLevel3Map()
+        {
+            LevelDataGenerator.CreateLevelDataAssets();
+            GameObject carPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CarPrefabBuilder.CarPrefabPath);
+            if (carPrefab == null)
+            {
+                carPrefab = CarPrefabBuilder.CreatePlayerCarPrefab();
+            }
+
+            Material roadMat = CreateMaterial("RoadAsphalt", new Color(0.18f, 0.18f, 0.20f), 0.2f);
+            Material curbMat = CreateMaterial("TrackCurb", new Color(0.85f, 0.2f, 0.2f), 0.5f);
+            Material barrierMat = CreateMaterial("BarrierMetal", new Color(0.35f, 0.4f, 0.45f), 0.7f);
+            Material cpMat = CreateMaterial("CheckpointGlow", new Color(0.2f, 0.8f, 1f, 0.6f), 0.9f);
+            Material finishMat = CreateMaterial("FinishArch", new Color(1f, 0.85f, 0.1f), 0.9f);
+
+            BuildLevelScene(3, "Level3", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("<color=green><b>[CarRush]</b> Level 3 map successfully rebuilt with smooth elevation, generous triggers, and fixed complete message!</color>");
+            EditorUtility.DisplayDialog("CarRush Builder", "Level 3 Mountain Road has been rebuilt successfully!\n\nHeight issues fixed & Level Complete message verified.", "Great!");
+        }
+
+        [MenuItem("CarRush/Build Level 5 Map", false, 2)]
+        public static void BuildLevel5Map()
+        {
+            LevelDataGenerator.CreateLevelDataAssets();
+            GameObject carPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CarPrefabBuilder.CarPrefabPath);
+            if (carPrefab == null)
+            {
+                carPrefab = CarPrefabBuilder.CreatePlayerCarPrefab();
+            }
+
+            Material roadMat = CreateMaterial("RoadAsphalt", new Color(0.18f, 0.18f, 0.20f), 0.2f);
+            Material curbMat = CreateMaterial("TrackCurb", new Color(0.85f, 0.2f, 0.2f), 0.5f);
+            Material barrierMat = CreateMaterial("BarrierMetal", new Color(0.35f, 0.4f, 0.45f), 0.7f);
+            Material cpMat = CreateMaterial("CheckpointGlow", new Color(0.2f, 0.8f, 1f, 0.6f), 0.9f);
+            Material finishMat = CreateMaterial("FinishArch", new Color(1f, 0.85f, 0.1f), 0.9f);
+
+            BuildLevelScene(5, "Level5", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("<color=green><b>[CarRush]</b> Level 5 Sunset Speedway successfully rebuilt!</color>");
+            EditorUtility.DisplayDialog("CarRush Builder", "Level 5 (Sunset Speedway) has been built and updated successfully!", "Awesome!");
+        }
+
         [MenuItem("CarRush/Build All 10 Race Levels & Register Scenes", false, 3)]
         public static void BuildAllLevels()
         {
@@ -61,17 +111,9 @@ namespace CarRush.Editor
             string scenePath = $"Assets/Scenes/{sceneName}.unity";
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
 
-            // Lighting & Sky setup
+            // Atmosphere & Weather Conditions per Level
             Light dirLight = Object.FindAnyObjectByType<Light>();
-            if (dirLight != null)
-            {
-                // Unique sky lighting tone per level group
-                if (levelNum <= 3) dirLight.color = new Color(1f, 0.95f, 0.88f); // Day
-                else if (levelNum <= 6) dirLight.color = new Color(1f, 0.8f, 0.6f); // Sunset
-                else dirLight.color = new Color(0.8f, 0.85f, 1f); // Dusk / High speed
-                dirLight.intensity = 1.2f;
-                dirLight.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
-            }
+            ApplyLevelWeatherAndAtmosphere(levelNum, dirLight);
 
             // Level Data reference
             LevelData levelData = AssetDatabase.LoadAssetAtPath<LevelData>($"Assets/Settings/LevelData/Level{levelNum}.asset");
@@ -153,6 +195,9 @@ namespace CarRush.Editor
             rmSo.FindProperty("playerCar").objectReferenceValue = carController;
             rmSo.FindProperty("startSpawnPoint").objectReferenceValue = spawnMarker.transform;
             rmSo.FindProperty("finishLine").objectReferenceValue = finishLine;
+            rmSo.FindProperty("fallThresholdY").floatValue = -40f;
+            rmSo.FindProperty("maxVerticalDropBelowCheckpoint").floatValue = 50f;
+            rmSo.FindProperty("upsideDownRespawnTime").floatValue = 2.5f;
 
             SerializedProperty cpListProp = rmSo.FindProperty("checkpoints");
             cpListProp.arraySize = checkpoints.Count;
@@ -166,6 +211,157 @@ namespace CarRush.Editor
             EditorSceneManager.SaveScene(scene, scenePath);
         }
 
+        private static void ApplyLevelWeatherAndAtmosphere(int levelNum, Light dirLight)
+        {
+            RenderSettings.fog = true;
+            RenderSettings.fogMode = FogMode.ExponentialSquared;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Trilight;
+
+            switch (levelNum)
+            {
+                case 1: // Level 1 - Bright Sunny Midday (Training Road)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.98f, 0.92f);
+                        dirLight.intensity = 1.3f;
+                        dirLight.transform.rotation = Quaternion.Euler(55f, -30f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.72f, 0.85f, 0.98f);
+                    RenderSettings.fogDensity = 0.0015f;
+                    RenderSettings.ambientSkyColor = new Color(0.75f, 0.85f, 0.98f);
+                    RenderSettings.ambientEquatorColor = new Color(0.6f, 0.7f, 0.8f);
+                    RenderSettings.ambientGroundColor = new Color(0.35f, 0.4f, 0.35f);
+                    break;
+
+                case 2: // Level 2 - City Dawn (Cool Morning Golden Sunlight)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.88f, 0.75f);
+                        dirLight.intensity = 1.25f;
+                        dirLight.transform.rotation = Quaternion.Euler(28f, -45f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.80f, 0.82f, 0.92f);
+                    RenderSettings.fogDensity = 0.0025f;
+                    RenderSettings.ambientSkyColor = new Color(0.7f, 0.78f, 0.92f);
+                    RenderSettings.ambientEquatorColor = new Color(0.65f, 0.65f, 0.75f);
+                    RenderSettings.ambientGroundColor = new Color(0.3f, 0.35f, 0.4f);
+                    break;
+
+                case 3: // Level 3 - Mountain Mist (Moody Overcast Mountain Fog)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(0.85f, 0.90f, 0.98f);
+                        dirLight.intensity = 1.05f;
+                        dirLight.transform.rotation = Quaternion.Euler(60f, -20f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.76f, 0.82f, 0.88f);
+                    RenderSettings.fogDensity = 0.0055f;
+                    RenderSettings.ambientSkyColor = new Color(0.68f, 0.75f, 0.82f);
+                    RenderSettings.ambientEquatorColor = new Color(0.55f, 0.6f, 0.68f);
+                    RenderSettings.ambientGroundColor = new Color(0.28f, 0.32f, 0.35f);
+                    break;
+
+                case 4: // Level 4 - Desert Hazard (Warm Amber Heat Haze & Dust)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.82f, 0.55f);
+                        dirLight.intensity = 1.35f;
+                        dirLight.transform.rotation = Quaternion.Euler(45f, -60f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.92f, 0.78f, 0.58f);
+                    RenderSettings.fogDensity = 0.004f;
+                    RenderSettings.ambientSkyColor = new Color(0.95f, 0.82f, 0.6f);
+                    RenderSettings.ambientEquatorColor = new Color(0.8f, 0.65f, 0.45f);
+                    RenderSettings.ambientGroundColor = new Color(0.45f, 0.35f, 0.25f);
+                    break;
+
+                case 5: // Level 5 - Sunset Speedway (Vibrant Golden Twilight)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.62f, 0.32f);
+                        dirLight.intensity = 1.4f;
+                        dirLight.transform.rotation = Quaternion.Euler(20f, -55f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.92f, 0.52f, 0.35f);
+                    RenderSettings.fogDensity = 0.0035f;
+                    RenderSettings.ambientSkyColor = new Color(0.95f, 0.55f, 0.45f);
+                    RenderSettings.ambientEquatorColor = new Color(0.65f, 0.4f, 0.55f);
+                    RenderSettings.ambientGroundColor = new Color(0.3f, 0.2f, 0.25f);
+                    break;
+
+                case 6: // Level 6 - Scorched Canyon (Harsh High Sun Scorcher)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.75f, 0.45f);
+                        dirLight.intensity = 1.45f;
+                        dirLight.transform.rotation = Quaternion.Euler(70f, -40f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.88f, 0.65f, 0.45f);
+                    RenderSettings.fogDensity = 0.005f;
+                    RenderSettings.ambientSkyColor = new Color(0.9f, 0.7f, 0.5f);
+                    RenderSettings.ambientEquatorColor = new Color(0.7f, 0.5f, 0.35f);
+                    RenderSettings.ambientGroundColor = new Color(0.4f, 0.3f, 0.2f);
+                    break;
+
+                case 7: // Level 7 - Stormy Ridge (Tempest Rain Clouds & Heavy Storm Fog)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(0.55f, 0.65f, 0.78f);
+                        dirLight.intensity = 0.8f;
+                        dirLight.transform.rotation = Quaternion.Euler(40f, -80f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.38f, 0.45f, 0.55f);
+                    RenderSettings.fogDensity = 0.009f;
+                    RenderSettings.ambientSkyColor = new Color(0.45f, 0.52f, 0.65f);
+                    RenderSettings.ambientEquatorColor = new Color(0.35f, 0.42f, 0.5f);
+                    RenderSettings.ambientGroundColor = new Color(0.2f, 0.25f, 0.3f);
+                    break;
+
+                case 8: // Level 8 - Cyber Metropolis (Midnight Neon Blue Atmosphere)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(0.4f, 0.5f, 0.95f);
+                        dirLight.intensity = 0.6f;
+                        dirLight.transform.rotation = Quaternion.Euler(35f, -110f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.12f, 0.15f, 0.32f);
+                    RenderSettings.fogDensity = 0.006f;
+                    RenderSettings.ambientSkyColor = new Color(0.25f, 0.3f, 0.6f);
+                    RenderSettings.ambientEquatorColor = new Color(0.18f, 0.15f, 0.35f);
+                    RenderSettings.ambientGroundColor = new Color(0.1f, 0.1f, 0.2f);
+                    break;
+
+                case 9: // Level 9 - Inferno Circuit (Volcanic Ash & Crimson Ember Sky)
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.35f, 0.18f);
+                        dirLight.intensity = 1.15f;
+                        dirLight.transform.rotation = Quaternion.Euler(30f, -40f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.48f, 0.22f, 0.15f);
+                    RenderSettings.fogDensity = 0.0075f;
+                    RenderSettings.ambientSkyColor = new Color(0.6f, 0.25f, 0.18f);
+                    RenderSettings.ambientEquatorColor = new Color(0.35f, 0.18f, 0.15f);
+                    RenderSettings.ambientGroundColor = new Color(0.2f, 0.1f, 0.1f);
+                    break;
+
+                case 10: // Level 10 - Grand Championship (Golden Dusk Arena)
+                default:
+                    if (dirLight != null)
+                    {
+                        dirLight.color = new Color(1.0f, 0.88f, 0.65f);
+                        dirLight.intensity = 1.35f;
+                        dirLight.transform.rotation = Quaternion.Euler(45f, -45f, 0f);
+                    }
+                    RenderSettings.fogColor = new Color(0.82f, 0.72f, 0.60f);
+                    RenderSettings.fogDensity = 0.003f;
+                    RenderSettings.ambientSkyColor = new Color(0.85f, 0.75f, 0.65f);
+                    RenderSettings.ambientEquatorColor = new Color(0.65f, 0.55f, 0.45f);
+                    RenderSettings.ambientGroundColor = new Color(0.3f, 0.25f, 0.2f);
+                    break;
+            }
+        }
+
         private static void SpawnTrackObstacles(Transform parent, List<Vector3> trackNodes, int level)
         {
             if (level <= 1) return; // Level 1 is obstacle-free training
@@ -174,11 +370,12 @@ namespace CarRush.Editor
             obsRoot.transform.SetParent(parent, false);
 
             int totalNodes = trackNodes.Count - 1;
-            // More obstacles at higher levels
-            int obstacleClusters = Mathf.Min(3 + level * 2, totalNodes / 2);
-            int step = Mathf.Max(2, totalNodes / obstacleClusters);
+            // Space obstacles well apart along the circuit so player has clear reaction time
+            int obstacleCount = Mathf.Min(3 + level, totalNodes / 4);
+            int step = Mathf.Max(4, totalNodes / (obstacleCount + 1));
 
-            for (int i = 2; i < totalNodes - 1; i += step)
+            int obstacleIndex = 0;
+            for (int i = 4; i < totalNodes - 3; i += step)
             {
                 Vector3 pA = trackNodes[i];
                 Vector3 pB = trackNodes[i + 1];
@@ -187,50 +384,66 @@ namespace CarRush.Editor
                 Vector3 mid = (pA + pB) * 0.5f;
                 Quaternion rot = Quaternion.LookRotation(fwd, Vector3.up);
 
-                // Determine hazard type based on level
+                // Strictly ONE obstacle per position, alternating between Left (-2.8f) and Right (+2.8f)
+                // Leaves 7+ meters of open, clear, unobstructed roadway on the opposite lane!
+                bool isLeft = (obstacleIndex % 2 == 0);
+                float sideOffset = isLeft ? -2.8f : 2.8f;
+                obstacleIndex++;
+
                 if (level == 2 || level == 3)
                 {
-                    // Cones on alternating lane sides
-                    float offset = (i % 2 == 0) ? -3.5f : 3.5f;
-                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * offset);
-                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * (offset + 1.2f));
+                    // Alternating Traffic Cones and Tire Wall barriers
+                    if (obstacleIndex % 2 == 0)
+                    {
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * sideOffset);
+                        ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * (sideOffset + (isLeft ? -0.8f : 0.8f)));
+                    }
                 }
                 else if (level == 4 || level == 5)
                 {
-                    // Hazard Barrels and cones
-                    float offset = (i % 2 == 0) ? -2.5f : 2.5f;
-                    ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * offset);
-                    ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid + right * (offset + ((offset > 0) ? -1.5f : 1.5f)));
+                    // Alternating Solid Concrete Barriers and Hazard Barrels
+                    if (obstacleIndex % 2 == 0)
+                    {
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 3.8f);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * sideOffset);
+                    }
                 }
                 else if (level >= 6 && level <= 8)
                 {
-                    // Chicanes and double hazard barrels
-                    if (i % (step * 2) == 0)
+                    // Alternating Solid Concrete Barriers, RoadBlock Chicanes, and Solid Tire Walls
+                    if (obstacleIndex % 3 == 0)
                     {
-                        float laneSide = (i % 4 == 0) ? -2.5f : 2.5f;
-                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, laneSide);
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.0f);
+                    }
+                    else if (obstacleIndex % 3 == 1)
+                    {
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, sideOffset);
                     }
                     else
                     {
-                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * -3f);
-                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * 3f);
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
                     }
                 }
-                else // Level 9 & 10 Extreme Master Obstacles
+                else // Level 9 & 10 Extreme Master Obstacles (one obstacle per location, alternating sides)
                 {
-                    if (i % 3 == 0)
+                    if (obstacleIndex % 3 == 0)
                     {
-                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, -2.5f);
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.2f);
                     }
-                    else if (i % 3 == 1)
+                    else if (obstacleIndex % 3 == 1)
                     {
-                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, 2.5f);
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, sideOffset);
                     }
                     else
                     {
-                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * -2f);
-                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * 2f);
-                        ObstacleBuilder.CreateTrafficCone(obsRoot.transform, mid);
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
                     }
                 }
             }
@@ -239,23 +452,75 @@ namespace CarRush.Editor
         private static List<Vector3> GenerateTrackNodes(int level)
         {
             List<Vector3> nodes = new List<Vector3>();
-            int segments = 14 + level * 3;
-            float radius = 65f + level * 12f;
+            // High segment count gives perfectly smooth, round road curvature without sharp polygonal corners
+            int segments = 40 + level * 4;
+            float radius = 70f + level * 9f;
 
             for (int i = 0; i < segments; i++)
             {
                 float angle = (float)i / segments * Mathf.PI * 2f;
-                // Rich varied track curvature per level
-                float waveFactor = (level % 2 == 0) ? (3 + level) : (2 + level);
-                float r = radius + Mathf.Sin(angle * waveFactor) * (14f + level * 3.5f) + Mathf.Cos(angle * 2f) * (8f + level * 2f);
+                float r = radius;
+                float y = 0f;
+
+                switch (level)
+                {
+                    case 1: // Training Road - Smooth Oval Circuit
+                        r += Mathf.Sin(angle * 2f) * 12f;
+                        y = 0f;
+                        break;
+
+                    case 2: // City Dawn - Gentle S-Curves & Straightaways
+                        r += Mathf.Sin(angle * 2f) * 15f + Mathf.Cos(angle * 3f) * 8f;
+                        y = 0f;
+                        break;
+
+                    case 3: // Mountain Mist - Mountain climbs and sweeping hairpins
+                        r += Mathf.Sin(angle * 2f) * 18f + Mathf.Cos(angle * 3f) * 10f;
+                        y = Mathf.Sin(angle * 2f) * 3.5f + Mathf.Cos(angle) * 2.0f + 3f;
+                        break;
+
+                    case 4: // Desert Hazard - Flowing desert chicanes
+                        r += Mathf.Sin(angle * 3f) * 20f + Mathf.Cos(angle * 2f) * 12f;
+                        y = Mathf.Sin(angle * 2f) * 2.5f + 1.5f;
+                        break;
+
+                    case 5: // Sunset Speedway - Banked High-Speed Tri-Oval Speedway
+                        r += Mathf.Sin(angle * 3f) * 25f + Mathf.Cos(angle * 2f) * 14f;
+                        y = Mathf.Sin(angle * 2f) * 4.0f + Mathf.Cos(angle) * 2.5f + 3.5f;
+                        break;
+
+                    case 6: // Scorched Canyon - Fast canyon sweepers and elevation drop
+                        r += Mathf.Sin(angle * 3f) * 22f + Mathf.Cos(angle * 4f) * 10f;
+                        y = Mathf.Sin(angle * 2f) * 3.5f + Mathf.Cos(angle * 2f) * 2.0f + 3f;
+                        break;
+
+                    case 7: // Stormy Ridge - Technical mountain ridge with wide sweeping turns
+                        r += Mathf.Sin(angle * 3f) * 24f + Mathf.Cos(angle * 2f) * 14f;
+                        y = Mathf.Sin(angle * 2f) * 4.5f + Mathf.Cos(angle) * 2.5f + 4f;
+                        break;
+
+                    case 8: // Cyber Metropolis - Grand Prix flowing chicane circuit
+                        r += Mathf.Sin(angle * 3f) * 26f + Mathf.Cos(angle * 4f) * 12f;
+                        y = Mathf.Sin(angle * 2f) * 3.0f + 2f;
+                        break;
+
+                    case 9: // Inferno Circuit - High intensity sweeping roller-coaster
+                        r += Mathf.Sin(angle * 4f) * 26f + Mathf.Cos(angle * 2f) * 16f;
+                        y = Mathf.Sin(angle * 2f) * 4.5f + Mathf.Cos(angle * 3f) * 2.0f + 4f;
+                        break;
+
+                    case 10: // Grand Championship - Ultimate flowing championship track
+                    default:
+                        r += Mathf.Sin(angle * 4f) * 28f + Mathf.Cos(angle * 2f) * 16f;
+                        y = Mathf.Sin(angle * 2f) * 4.0f + Mathf.Cos(angle) * 3.0f + 3.5f;
+                        break;
+                }
+
                 float x = Mathf.Cos(angle) * r;
                 float z = Mathf.Sin(angle) * r;
-                // Hill elevation with varying undulations
-                float y = (level >= 3) ? (Mathf.Sin(angle * 4f) * (3f + level * 1.2f)) : 0f;
-
                 nodes.Add(new Vector3(x, y, z));
             }
-            // Close loop
+            // Close loop seamlessly
             nodes.Add(nodes[0]);
             return nodes;
         }
@@ -299,12 +564,12 @@ namespace CarRush.Editor
         {
             GameObject cpObj = new GameObject($"Checkpoint_{index}");
             cpObj.transform.SetParent(parent, false);
-            cpObj.transform.position = pos + Vector3.up * 2f;
+            cpObj.transform.position = pos + Vector3.up * 2.5f;
             cpObj.transform.rotation = rot;
 
             BoxCollider col = cpObj.AddComponent<BoxCollider>();
             col.isTrigger = true;
-            col.size = new Vector3(14f, 6f, 2f);
+            col.size = new Vector3(18f, 10f, 6f);
 
             // Visual Gate Arches
             GameObject leftPost = GameObject.CreatePrimitive(PrimitiveType.Cylinder);
@@ -337,12 +602,12 @@ namespace CarRush.Editor
         {
             GameObject finishObj = new GameObject("FinishLine");
             finishObj.transform.SetParent(parent, false);
-            finishObj.transform.position = pos + Vector3.up * 2f;
+            finishObj.transform.position = pos + Vector3.up * 2.5f;
             finishObj.transform.rotation = rot;
 
             BoxCollider col = finishObj.AddComponent<BoxCollider>();
             col.isTrigger = true;
-            col.size = new Vector3(14f, 6f, 2f);
+            col.size = new Vector3(18f, 10f, 6f);
 
             // Arch banner
             GameObject banner = GameObject.CreatePrimitive(PrimitiveType.Cube);
@@ -420,12 +685,22 @@ namespace CarRush.Editor
             UnityEventTools.AddPersistentListener(retryBtn.onClick, completeUI.OnRetryPressed);
             UnityEventTools.AddPersistentListener(victoryMenuBtn.onClick, completeUI.OnLevelSelectPressed);
 
+            // Time Up Panel
+            GameObject timeUpPanel = CreateMenuPanel(canvasObj.transform, "TimeUpPanel", "TIME EXPIRED!", new Vector2(520, 420));
+            Button timeUpRetryBtn = CreateButton(timeUpPanel.transform, "RetryBtn", "RETRY", new Vector2(0, 0), new Color(0.2f, 0.4f, 0.7f));
+            Button timeUpMenuBtn = CreateButton(timeUpPanel.transform, "MenuBtn", "LEVEL SELECT", new Vector2(0, -75), new Color(0.3f, 0.35f, 0.45f));
+
+            UnityEventTools.AddPersistentListener(timeUpRetryBtn.onClick, completeUI.OnRetryPressed);
+            UnityEventTools.AddPersistentListener(timeUpMenuBtn.onClick, completeUI.OnLevelSelectPressed);
+
             SerializedObject compSo = new SerializedObject(completeUI);
             compSo.FindProperty("victoryPanel").objectReferenceValue = victoryPanel;
+            compSo.FindProperty("timeUpPanel").objectReferenceValue = timeUpPanel;
             compSo.FindProperty("timeResultText").objectReferenceValue = timeResObj.GetComponent<TextMeshProUGUI>();
             compSo.FindProperty("newBestBadge").objectReferenceValue = bestBadge.GetComponent<TextMeshProUGUI>();
             compSo.ApplyModifiedProperties();
             victoryPanel.SetActive(false);
+            timeUpPanel.SetActive(false);
 
             return canvasObj;
         }

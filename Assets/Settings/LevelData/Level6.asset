@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Level6
   m_EditorClassIdentifier: Assembly-CSharp::CarRush.Level.LevelData
   levelNumber: 6
-  levelName: Desert Canyon
+  levelName: Scorched Canyon
   sceneName: Level6
-  timeLimit: 85
+  timeLimit: 55
   difficulty: 2
   checkpointCount: 6

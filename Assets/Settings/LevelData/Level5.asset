@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 5
   levelName: Sunset Speedway
   sceneName: Level5
-  timeLimit: 90
+  timeLimit: 60
   difficulty: 2
   checkpointCount: 5

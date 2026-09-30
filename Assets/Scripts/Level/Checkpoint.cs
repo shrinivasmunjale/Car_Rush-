@@ -21,7 +21,10 @@ namespace CarRush.Level
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Player") || other.GetComponentInParent<Car.CarController>() != null)
+            if (other.CompareTag("Player") ||
+                other.GetComponentInParent<Car.CarController>() != null ||
+                (other.attachedRigidbody != null && other.attachedRigidbody.CompareTag("Player")) ||
+                (other.attachedRigidbody != null && other.attachedRigidbody.GetComponent<Car.CarController>() != null))
             {
                 OnCarEnterCheckpoint?.Invoke(this, other);
             }

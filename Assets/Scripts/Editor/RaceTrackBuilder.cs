@@ -86,6 +86,10 @@ namespace CarRush.Editor
                 CreateRoadSegment(trackRoot.transform, pA, pB, roadMat, curbMat, barrierMat);
             }
 
+            // Place Ad Billboards along the roadside
+            AdBillboardBuilder.PlaceBillboardsInOpenScene();
+
+
             // Create Checkpoints
             int cpCount = levelData != null ? levelData.checkpointCount : 3;
             float step = (float)(trackNodes.Count - 2) / (cpCount + 1);

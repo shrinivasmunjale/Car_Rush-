@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 10
   levelName: Grand Championship
   sceneName: Level10
-  timeLimit: 48
+  timeLimit: 53
   difficulty: 4
   checkpointCount: 8

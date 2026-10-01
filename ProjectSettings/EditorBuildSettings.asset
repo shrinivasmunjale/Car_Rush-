@@ -41,4 +41,34 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Level10.unity
     guid: 558f575a50356814ea88ce66f48d8ee2
+  - enabled: 1
+    path: Assets/Scenes/Level11.unity
+    guid: e5ec6aa6270c5a249a37021ebb32e856
+  - enabled: 1
+    path: Assets/Scenes/Level12.unity
+    guid: 4c5798fbd58a8e14c8a34cfafd75b130
+  - enabled: 1
+    path: Assets/Scenes/Level13.unity
+    guid: 1a045ead477ce6040a78e5d3809551b9
+  - enabled: 1
+    path: Assets/Scenes/Level14.unity
+    guid: b5f968e1eb39c6a45810a152f7a2166d
+  - enabled: 1
+    path: Assets/Scenes/Level15.unity
+    guid: 7d3475013046cba44925da0392b3acf9
+  - enabled: 1
+    path: Assets/Scenes/Level16.unity
+    guid: 99bab0bad07a9164280b7f68200216a1
+  - enabled: 1
+    path: Assets/Scenes/Level17.unity
+    guid: 4d32202193bbe6841befdbf402d59525
+  - enabled: 1
+    path: Assets/Scenes/Level18.unity
+    guid: 06be025e7f60f3047804a219a85b76db
+  - enabled: 1
+    path: Assets/Scenes/Level19.unity
+    guid: 65d5b0965991b724a8e61e2ab1087236
+  - enabled: 1
+    path: Assets/Scenes/Level20.unity
+    guid: 4251a715d2c4b2341b76d98de3a972ce
   m_configObjects: {}

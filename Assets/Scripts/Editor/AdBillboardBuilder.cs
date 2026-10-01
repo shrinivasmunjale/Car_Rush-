@@ -173,18 +173,10 @@ namespace CarRush.Editor
         [MenuItem("CarRush/Place Ad Billboards in All Levels", false, 4)]
         public static void PlaceAdBillboardsInAllLevels()
         {
-            string[] levelScenes = new[]
-            {
-                "Assets/Scenes/Level1.unity",
-                "Assets/Scenes/Level2.unity",
-                "Assets/Scenes/Level3.unity",
-                "Assets/Scenes/Level4.unity",
-                "Assets/Scenes/Level5.unity"
-            };
-
             int totalPlaced = 0;
-            foreach (string scenePath in levelScenes)
+            for (int i = 1; i <= 20; i++)
             {
+                string scenePath = $"Assets/Scenes/Level{i}.unity";
                 if (!File.Exists(scenePath)) continue;
 
                 Scene scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
@@ -198,8 +190,8 @@ namespace CarRush.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log($"<color=green><b>[CarRush]</b> Successfully placed {totalPlaced} advertisement billboards across all level tracks!</color>");
-            EditorUtility.DisplayDialog("Ad Billboards Placed", $"Successfully added advertisement boards outside the road across all 5 levels!\n\nImage source: Assets/ad folder", "Great!");
+            Debug.Log($"<color=green><b>[CarRush]</b> Successfully placed {totalPlaced} advertisement billboards across all 20 level tracks!</color>");
+            EditorUtility.DisplayDialog("Ad Billboards Placed", $"Successfully added advertisement boards outside the road across all 20 levels!\n\nImage source: Assets/ad folder", "Great!");
         }
 
         [MenuItem("CarRush/Place Ad Billboard in Active Scene", false, 5)]

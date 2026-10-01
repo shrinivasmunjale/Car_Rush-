@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 13
   levelName: Volcanic Fury
   sceneName: Level13
-  timeLimit: 57
+  timeLimit: 61
   difficulty: 4
   checkpointCount: 9

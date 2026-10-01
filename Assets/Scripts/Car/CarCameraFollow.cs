@@ -39,21 +39,30 @@ namespace CarRush.Car
         {
             if (target == null) return;
 
-            // Target position behind car aligned with car forward
+            // Frame-rate-independent exponential damping (prevents rubberbanding/jitter at speed > 100 km/h)
+            float dt = Time.deltaTime;
+            if (dt <= 0f) return;
+
             Vector3 desiredPosition = target.TransformPoint(offset);
-            transform.position = Vector3.Lerp(transform.position, desiredPosition, Time.deltaTime * positionDamping);
+            float posT = 1f - Mathf.Exp(-positionDamping * dt);
+            transform.position = Vector3.Lerp(transform.position, desiredPosition, posT);
 
             // Look slightly ahead of car
             Vector3 lookTarget = target.position + target.forward * lookaheadDistance + Vector3.up * 1f;
-            Quaternion desiredRotation = Quaternion.LookRotation(lookTarget - transform.position, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, Time.deltaTime * rotationDamping);
+            Vector3 lookDir = lookTarget - transform.position;
+            if (lookDir.sqrMagnitude > 0.001f)
+            {
+                Quaternion desiredRotation = Quaternion.LookRotation(lookDir, Vector3.up);
+                float rotT = 1f - Mathf.Exp(-rotationDamping * dt);
+                transform.rotation = Quaternion.Slerp(transform.rotation, desiredRotation, rotT);
+            }
 
-            // Dynamic FOV
+            // Dynamic FOV smoothly expands with speed
             if (cam != null && targetRb != null)
             {
                 float speed = targetRb.linearVelocity.magnitude * 3.6f;
                 float targetFov = Mathf.Lerp(minFov, maxFov, Mathf.Clamp01(speed / maxFovSpeedKmh));
-                cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFov, Time.deltaTime * 3f);
+                cam.fieldOfView = Mathf.Lerp(cam.fieldOfView, targetFov, 1f - Mathf.Exp(-4f * dt));
             }
         }
     }

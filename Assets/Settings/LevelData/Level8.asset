@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 8
   levelName: Cyber Metropolis
   sceneName: Level8
-  timeLimit: 46
+  timeLimit: 48
   difficulty: 3
   checkpointCount: 7

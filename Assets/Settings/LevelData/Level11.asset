@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 11
   levelName: Frozen Peaks
   sceneName: Level11
-  timeLimit: 50
+  timeLimit: 55
   difficulty: 4
   checkpointCount: 8

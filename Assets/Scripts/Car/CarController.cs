@@ -59,6 +59,7 @@ namespace CarRush.Car
 
         private Rigidbody rb;
         private float currentSteerInput;
+        private float _targetSteerInput;    // Raw steer from ReadInput(), smoothed in FixedUpdate
         private float currentThrottleInput;
         private bool isHandbraking;
         private bool isControlEnabled = true;
@@ -85,6 +86,7 @@ namespace CarRush.Car
             if (!enabled)
             {
                 currentSteerInput = 0f;
+                _targetSteerInput = 0f;
                 currentThrottleInput = 0f;
                 isHandbraking = false;
             }
@@ -126,6 +128,7 @@ namespace CarRush.Car
         {
             rb = GetComponent<Rigidbody>();
             rb.centerOfMass = centerOfMassOffset;
+            rb.interpolation = RigidbodyInterpolation.Interpolate;
 
             // Automatically attach TireMarks component if missing
             if (GetComponent<TireMarks>() == null)
@@ -137,11 +140,22 @@ namespace CarRush.Car
         private void Update()
         {
             ReadInput();
+        }
+
+        private void LateUpdate()
+        {
+            // Must run AFTER physics (FixedUpdate) has resolved for the frame.
+            // Calling this in Update() causes a 1-frame visual lag on wheel positions
+            // that manifests as jitter/stutter at speed.
             UpdateWheelMeshes();
         }
 
         private void FixedUpdate()
         {
+            // Apply steering smoothing at the physics rate so it is frame-rate-independent.
+            // 26 units/s gives fast, responsive steering with no input lag.
+            currentSteerInput = Mathf.MoveTowards(currentSteerInput, _targetSteerInput, Time.fixedDeltaTime * 26f);
+
             // If time is up or emergency stop is engaged, swiftly bring the car to a full stop
             bool timeExpired = RaceManager.Instance != null && RaceManager.Instance.CurrentState == RaceState.TimeUp;
             if (isStopped || timeExpired)
@@ -176,6 +190,7 @@ namespace CarRush.Car
             if (!isControlEnabled || timeExpired)
             {
                 currentSteerInput = 0f;
+                _targetSteerInput = 0f;
                 currentThrottleInput = 0f;
                 isHandbraking = isStopped || timeExpired;
                 return;
@@ -213,8 +228,9 @@ namespace CarRush.Car
             targetSteer = Mathf.Clamp(targetSteer, -1f, 1f);
             targetThrottle = Mathf.Clamp(targetThrottle, -1f, 1f);
 
-            // Smoothly interpolate steering with fast, responsive auto-centering (increased for fast left-right response)
-            currentSteerInput = Mathf.MoveTowards(currentSteerInput, targetSteer, Time.deltaTime * 26f);
+            // Store raw inputs; smoothing is applied in FixedUpdate at the physics rate
+            // to avoid frame-rate dependency (Update runs at render FPS, not physics FPS).
+            _targetSteerInput = targetSteer;
             currentThrottleInput = targetThrottle;
             isHandbraking = handbrake;
         }
@@ -358,6 +374,7 @@ namespace CarRush.Car
 
             // Reset inputs & wheel states
             currentSteerInput = 0f;
+            _targetSteerInput = 0f;
             currentThrottleInput = 0f;
             isHandbraking = false;
             ResetWheel(frontLeftWheel);

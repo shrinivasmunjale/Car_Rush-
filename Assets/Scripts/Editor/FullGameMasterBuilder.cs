@@ -24,17 +24,17 @@ namespace CarRush.Editor
             // Step 4: Open MainMenu scene ready for playing
             EditorSceneManager.OpenScene("Assets/Scenes/MainMenu.unity", OpenSceneMode.Single);
 
-            Debug.Log("<color=green><b>===========================================\n[CarRush] FULL GAME SUCCESSFULLY BUILT!\nMainMenu -> LevelSelect -> Levels 1..10 with Obstacles & Ads are ready.\nPress Play (▶) to race!\n===========================================</b></color>");
+            Debug.Log("<color=green><b>===========================================\n[CarRush] FULL GAME SUCCESSFULLY BUILT!\nMainMenu -> LevelSelect -> Levels 1..20 with Obstacles & Ads are ready.\nPress Play (▶) to race!\n===========================================</b></color>");
 
             EditorUtility.DisplayDialog("CarRush Complete!",
                 "Car Rush full game has been built and configured!\n\n" +
                 "✓ Main Menu Scene & UI\n" +
-                "✓ Level Select Scene & 10 Level Assets with Reset Progress\n" +
-                "✓ 3D Player Car with WheelCollider physics\n" +
-                "✓ Levels 1 to 10 with 3D Tracks, Checkpoints, Finish Lines & Road Obstacles\n" +
+                "✓ Level Select Scene & 20 Level Assets with Reset Progress\n" +
+                "✓ 3D Player Car with WheelCollider physics & Smooth Interpolation\n" +
+                "✓ Levels 1 to 20 with 3D Tracks, Checkpoints, Finish Lines & Road Obstacles\n" +
                 "✓ Roadside Advertisement Billboards with Custom Graphic\n" +
                 "✓ In-game HUD, Speedometer, Pause & Complete Menus\n" +
-                "✓ All 12 scenes registered in Build Settings\n\n" +
+                "✓ All 22 scenes registered in Build Settings\n\n" +
                 "Press Play (▶) in Unity to test the full game!", "Let's Race! 🏁");
         }
     }

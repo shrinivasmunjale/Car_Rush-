@@ -70,7 +70,9 @@ namespace CarRush.Editor
         }
 
         [MenuItem("CarRush/Build All 10 Race Levels & Register Scenes", false, 3)]
-        public static void BuildAllLevels()
+        public static void BuildAllLevelsMenu() => BuildAllLevels(true);
+
+        public static void BuildAllLevels(bool showDialog = false)
         {
             // Ensure LevelData assets & Car Prefab exist
             LevelDataGenerator.CreateLevelDataAssets();
@@ -87,13 +89,13 @@ namespace CarRush.Editor
             Material cpMat = CreateMaterial("CheckpointGlow", new Color(0.2f, 0.8f, 1f, 0.6f), 0.9f);
             Material finishMat = CreateMaterial("FinishArch", new Color(1f, 0.85f, 0.1f), 0.9f);
 
-            // Generate tracks for Levels 1..10
-            for (int i = 1; i <= 10; i++)
+            // Generate tracks for Levels 1..20
+            for (int i = 1; i <= 20; i++)
             {
                 BuildLevelScene(i, $"Level{i}", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
             }
 
-            // Also build/update LevelSelect scene with 10 level buttons & reset button
+            // Also build/update LevelSelect scene with 20 level buttons & reset button
             LevelSelectBuilder.BuildLevelSelectScene();
 
             // Register all scenes in Build Settings
@@ -102,8 +104,50 @@ namespace CarRush.Editor
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
 
-            Debug.Log("<color=green><b>[CarRush]</b> All 10 Level scenes & obstacles successfully generated and registered in Build Settings!</color>");
-            EditorUtility.DisplayDialog("CarRush Builder", "All 10 Race Levels with Road Obstacles, Advertisement Boards, and Level Select have been built and registered!\n\nYou can now test the full game!", "Awesome!");
+            Debug.Log("<color=green><b>[CarRush]</b> All 20 Level scenes & obstacles successfully generated and registered in Build Settings!</color>");
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog("CarRush Builder", "All 20 Race Levels with Road Obstacles, Advertisement Boards, and Level Select have been built and registered!\n\nYou can now test the full game!", "Awesome!");
+            }
+        }
+
+        /// <summary>
+        /// Builds Levels 11 through 20, each with a unique atmosphere, track layout,
+        /// and escalating Extreme+ obstacle complexity. Run this after building Levels 1-10.
+        /// </summary>
+        [MenuItem("CarRush/Build Levels 11-20 & Register Scenes", false, 4)]
+        public static void BuildLevels11To20Menu() => BuildLevels11To20(true);
+
+        public static void BuildLevels11To20(bool showDialog = false)
+        {
+            LevelDataGenerator.CreateLevelDataAssets();
+            GameObject carPrefab = AssetDatabase.LoadAssetAtPath<GameObject>(CarPrefabBuilder.CarPrefabPath);
+            if (carPrefab == null)
+                carPrefab = CarPrefabBuilder.CreatePlayerCarPrefab();
+
+            Material roadMat   = CreateMaterial("RoadAsphalt",  new Color(0.18f, 0.18f, 0.20f), 0.2f);
+            Material curbMat   = CreateMaterial("TrackCurb",    new Color(0.85f, 0.2f,  0.2f),  0.5f);
+            Material barrierMat = CreateMaterial("BarrierMetal", new Color(0.35f, 0.4f,  0.45f), 0.7f);
+            Material cpMat     = CreateMaterial("CheckpointGlow", new Color(0.2f, 0.8f,  1f, 0.6f), 0.9f);
+            Material finishMat = CreateMaterial("FinishArch",   new Color(1f,    0.85f, 0.1f),  0.9f);
+
+            for (int i = 11; i <= 20; i++)
+                BuildLevelScene(i, $"Level{i}", roadMat, curbMat, barrierMat, cpMat, finishMat, carPrefab);
+
+            RegisterAllScenesInBuildSettings();
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+
+            Debug.Log("<color=cyan><b>[CarRush]</b> Levels 11-20 built and registered!</color>");
+            if (showDialog)
+            {
+                EditorUtility.DisplayDialog("CarRush Builder",
+                    "Levels 11–20 have been built!\n\n" +
+                    "✓ Frozen Peaks (11)\n✓ Neon Underground (12)\n✓ Volcanic Fury (13)\n" +
+                    "✓ Arctic Drift (14)\n✓ Gravity Storm (15)\n✓ Crimson Badlands (16)\n" +
+                    "✓ Quantum Circuit (17)\n✓ Abyss Run (18)\n✓ Thunder Ridge (19)\n✓ Apex Limit (20)\n\n" +
+                    "All scenes registered in Build Settings.", "Let's Go! 🏁");
+            }
         }
 
         private static void BuildLevelScene(int levelNum, string sceneName, Material roadMat, Material curbMat, Material barrierMat, Material cpMat, Material finishMat, GameObject carPrefab)
@@ -431,11 +475,21 @@ namespace CarRush.Editor
                         ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
                     }
                 }
-                else // Level 9 & 10 Extreme Master Obstacles (one obstacle per location, alternating sides)
+                else if (level >= 9 && level <= 10) // Extreme Master (Levels 9-10)
                 {
                     if (obstacleIndex % 3 == 0)
-                    {
                         ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.2f);
+                    else if (obstacleIndex % 3 == 1)
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, sideOffset);
+                    else
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
+                }
+                else if (level >= 11 && level <= 14) // Elite I (Levels 11-14): Alternating chicanes with open opposite lane
+                {
+                    // Strictly alternate sides: one side obstacle only, leaving the full opposite lane clear
+                    if (obstacleIndex % 3 == 0)
+                    {
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.0f);
                     }
                     else if (obstacleIndex % 3 == 1)
                     {
@@ -444,6 +498,45 @@ namespace CarRush.Editor
                     else
                     {
                         ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                }
+                else if (level >= 15 && level <= 17) // Elite II (Levels 15-17): Alternating technical slalom
+                {
+                    if (obstacleIndex % 4 == 0)
+                    {
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.2f);
+                    }
+                    else if (obstacleIndex % 4 == 1)
+                    {
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                    else if (obstacleIndex % 4 == 2)
+                    {
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateHazardBarrel(obsRoot.transform, mid + right * sideOffset);
+                    }
+                }
+                else // Apex Limit (Levels 18-20): High-speed master chicane slalom
+                {
+                    // Alternating barriers strictly on one side per point — always keeping clear racing line
+                    if (obstacleIndex % 4 == 0)
+                    {
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.4f);
+                    }
+                    else if (obstacleIndex % 4 == 1)
+                    {
+                        ObstacleBuilder.CreateRoadBlockChicane(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                    else if (obstacleIndex % 4 == 2)
+                    {
+                        ObstacleBuilder.CreateTireWallBarrier(obsRoot.transform, mid, rot, sideOffset);
+                    }
+                    else
+                    {
+                        ObstacleBuilder.CreateSolidConcreteBarrier(obsRoot.transform, mid, rot, sideOffset, 4.0f);
                     }
                 }
             }
@@ -510,9 +603,61 @@ namespace CarRush.Editor
                         break;
 
                     case 10: // Grand Championship - Ultimate flowing championship track
-                    default:
                         r += Mathf.Sin(angle * 4f) * 28f + Mathf.Cos(angle * 2f) * 16f;
                         y = Mathf.Sin(angle * 2f) * 4.0f + Mathf.Cos(angle) * 3.0f + 3.5f;
+                        break;
+
+                    // ── Levels 11-20: Elite & Apex Tier ─────────────────────────────
+
+                    case 11: // Frozen Peaks - Wide glacial oval with icy elevation rises
+                        r += Mathf.Sin(angle * 2f) * 22f + Mathf.Cos(angle * 5f) * 8f;
+                        y = Mathf.Cos(angle * 2f) * 5.5f + Mathf.Sin(angle) * 2.5f + 4.5f;
+                        break;
+
+                    case 12: // Neon Underground - Tight high-speed underground chicanes
+                        r += Mathf.Sin(angle * 5f) * 20f + Mathf.Cos(angle * 3f) * 12f;
+                        y = Mathf.Sin(angle * 3f) * 2.5f + 1.5f;
+                        break;
+
+                    case 13: // Volcanic Fury - Extreme elevation roller with caldera bends
+                        r += Mathf.Sin(angle * 4f) * 28f + Mathf.Cos(angle * 3f) * 14f;
+                        y = Mathf.Sin(angle * 3f) * 6.0f + Mathf.Cos(angle * 2f) * 3.0f + 5.0f;
+                        break;
+
+                    case 14: // Arctic Drift - Long sweeping snowfield bends at high radius
+                        r += Mathf.Sin(angle * 2f) * 30f + Mathf.Cos(angle * 4f) * 12f;
+                        y = Mathf.Cos(angle * 2f) * 4.0f + Mathf.Sin(angle) * 2.0f + 3.5f;
+                        break;
+
+                    case 15: // Gravity Storm - Multi-helix spiral upward & downward loops
+                        r += Mathf.Sin(angle * 5f) * 26f + Mathf.Cos(angle * 3f) * 14f;
+                        y = Mathf.Sin(angle * 4f) * 7.0f + Mathf.Cos(angle * 2f) * 3.5f + 6.0f;
+                        break;
+
+                    case 16: // Crimson Badlands - Canyon walls, tightly-threaded switchbacks
+                        r += Mathf.Sin(angle * 5f) * 24f + Mathf.Cos(angle * 4f) * 16f;
+                        y = Mathf.Sin(angle * 3f) * 5.5f + Mathf.Cos(angle * 4f) * 2.5f + 4.0f;
+                        break;
+
+                    case 17: // Quantum Circuit - Sci-fi precision hairpin complex
+                        r += Mathf.Sin(angle * 6f) * 22f + Mathf.Cos(angle * 3f) * 18f;
+                        y = Mathf.Sin(angle * 2f) * 4.5f + Mathf.Cos(angle * 3f) * 2.0f + 3.5f;
+                        break;
+
+                    case 18: // Abyss Run - Deep void spiral, dramatic drops and climbs
+                        r += Mathf.Sin(angle * 5f) * 30f + Mathf.Cos(angle * 4f) * 14f;
+                        y = Mathf.Sin(angle * 4f) * 8.0f + Mathf.Cos(angle * 3f) * 4.0f + 7.0f;
+                        break;
+
+                    case 19: // Thunder Ridge - Storm-swept mountain figure-8 complex
+                        r += Mathf.Sin(angle * 4f) * 32f + Mathf.Cos(angle * 5f) * 16f;
+                        y = Mathf.Sin(angle * 3f) * 7.0f + Mathf.Cos(angle * 2f) * 4.0f + 6.0f;
+                        break;
+
+                    case 20: // Apex Limit - Grand Finale: maximum speed, maximum complexity
+                    default:
+                        r += Mathf.Sin(angle * 6f) * 34f + Mathf.Cos(angle * 4f) * 18f;
+                        y = Mathf.Sin(angle * 4f) * 8.5f + Mathf.Cos(angle * 3f) * 5.0f + 7.5f;
                         break;
                 }
 
@@ -783,29 +928,20 @@ namespace CarRush.Editor
 
         public static void RegisterAllScenesInBuildSettings()
         {
-            string[] scenePaths = new string[]
+            // Build the full scene list: MainMenu + LevelSelect + Level 1..20
+            List<string> scenePaths = new List<string>
             {
                 "Assets/Scenes/MainMenu.unity",
-                "Assets/Scenes/LevelSelect.unity",
-                "Assets/Scenes/Level1.unity",
-                "Assets/Scenes/Level2.unity",
-                "Assets/Scenes/Level3.unity",
-                "Assets/Scenes/Level4.unity",
-                "Assets/Scenes/Level5.unity",
-                "Assets/Scenes/Level6.unity",
-                "Assets/Scenes/Level7.unity",
-                "Assets/Scenes/Level8.unity",
-                "Assets/Scenes/Level9.unity",
-                "Assets/Scenes/Level10.unity"
+                "Assets/Scenes/LevelSelect.unity"
             };
+            for (int i = 1; i <= 20; i++)
+                scenePaths.Add($"Assets/Scenes/Level{i}.unity");
 
             List<EditorBuildSettingsScene> buildScenes = new List<EditorBuildSettingsScene>();
             foreach (string p in scenePaths)
             {
                 if (File.Exists(p))
-                {
                     buildScenes.Add(new EditorBuildSettingsScene(p, true));
-                }
             }
 
             EditorBuildSettings.scenes = buildScenes.ToArray();

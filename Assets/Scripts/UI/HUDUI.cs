@@ -62,14 +62,17 @@ namespace CarRush.UI
                     speedBar.fillAmount = Mathf.Clamp01(speed / 160f);
             }
 
-            // Timer
+            // Remaining Time Display
             if (timerText != null)
             {
-                float t = raceManager.CurrentRaceTime;
-                int minutes = (int)(t / 60);
-                int seconds = (int)(t % 60);
-                int fraction = (int)((t * 100) % 100);
-                timerText.text = $"<size=22>TIME</size>\n{minutes:00}:{seconds:00}.<size=22>{fraction:00}</size>";
+                float rem = raceManager.RemainingTime;
+                int minutes = (int)(rem / 60);
+                int seconds = (int)(rem % 60);
+                int fraction = (int)((rem * 100) % 100);
+
+                // High-visibility dynamic warning colors for low time (<10s and <5s)
+                string colorPrefix = rem <= 5f ? "<color=#FF3B30>" : (rem <= 10f ? "<color=#FF9500>" : "<color=#FFFFFF>");
+                timerText.text = $"{colorPrefix}<size=18>TIME LEFT</size>\n{minutes:00}:{seconds:00}.<size=22>{fraction:00}</size></color>";
             }
 
             // Countdown

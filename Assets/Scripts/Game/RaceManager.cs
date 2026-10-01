@@ -48,7 +48,7 @@ namespace CarRush.Game
         // State
         public RaceState CurrentState { get; private set; } = RaceState.Countdown;
         public float CurrentRaceTime { get; private set; } = 0f;
-        public float RemainingTime => levelData != null ? Mathf.Max(0f, levelData.timeLimit - CurrentRaceTime) : 0f;
+        public float RemainingTime => (levelData != null && levelData.timeLimit > 0f) ? Mathf.Max(0f, levelData.timeLimit - CurrentRaceTime) : Mathf.Max(0f, 60f - CurrentRaceTime);
         public int CurrentCheckpointIndex { get; private set; } = 0;
         public int TotalCheckpoints => checkpoints.Count;
         public string CountdownText { get; private set; } = "";

@@ -44,12 +44,12 @@ namespace CarRush.Save
             }
         }
 
-        /// <summary>Unlocks all 10 levels (helpful for testing).</summary>
+        /// <summary>Unlocks all 20 levels (helpful for testing).</summary>
         public static void UnlockAllLevels()
         {
-            PlayerPrefs.SetInt(UnlockedLevelKey, 10);
+            PlayerPrefs.SetInt(UnlockedLevelKey, 20);
             PlayerPrefs.Save();
-            Debug.Log("<color=green><b>[SaveManager] All 10 levels unlocked!</b></color>");
+            Debug.Log("<color=green><b>[SaveManager] All 20 levels unlocked!</b></color>");
         }
 
         /// <summary>Resets progress back to Level 1 only.</summary>
@@ -93,11 +93,11 @@ namespace CarRush.Save
         }
 
 #if UNITY_EDITOR
-        [UnityEditor.MenuItem("CarRush/Progression/🔓 Unlock All Levels (1..10)", false, 100)]
+        [UnityEditor.MenuItem("CarRush/Progression/🔓 Unlock All Levels (1..20)", false, 100)]
         private static void MenuUnlockAll()
         {
             UnlockAllLevels();
-            UnityEditor.EditorUtility.DisplayDialog("Save Manager", "All levels 1 to 10 are now UNLOCKED!", "OK");
+            UnityEditor.EditorUtility.DisplayDialog("Save Manager", "All levels 1 to 20 are now UNLOCKED!", "OK");
         }
 
         [UnityEditor.MenuItem("CarRush/Progression/🔒 Reset Progress (Lock to Level 1)", false, 101)]

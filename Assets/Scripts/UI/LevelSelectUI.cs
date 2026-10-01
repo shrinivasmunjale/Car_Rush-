@@ -10,33 +10,51 @@ namespace CarRush.UI
     /// <summary>
     /// Level Select screen.
     ///
-    /// Holds the ordered list of LevelData assets, spawns one button row per
-    /// level into a container, locks locked levels, and loads the matching
-    /// scene when an unlocked row is clicked. Also handles the BACK button.
+    /// Supports up to 20 levels across two pages (10 per page).
+    /// Each page shows 10 level buttons in a single vertical list.
+    /// Prev / Next page buttons navigate between the two pages.
+    /// Also handles the BACK button and RESET PROGRESS.
     ///
     /// Requires in the scene:
     ///  - a LevelSelectButton prefab (button with number/name/info labels)
     ///  - a container (e.g. an empty GameObject under the Canvas)
+    ///  - optionally leftContainer / rightContainer for two-column layout
+    ///  - optional prevPageButton / nextPageButton UI Buttons
     /// </summary>
     public class LevelSelectUI : MonoBehaviour
     {
         [Header("Data")]
-        [Tooltip("All LevelData assets in level order (1..10).")]
+        [Tooltip("All LevelData assets in level order (1..20).")]
         [SerializeField] private LevelData[] levels;
 
         [Header("UI")]
         [Tooltip("Reusable button row prefab (has a LevelSelectButton component).")]
         [SerializeField] private LevelSelectButton buttonPrefab;
 
-        [Tooltip("Transform the spawned rows are parented under (or fallback).")]
+        [Tooltip("Transform the spawned rows are parented under (fallback).")]
         [SerializeField] private Transform buttonContainer;
 
-        [Tooltip("Optional Left column (for Levels 1..5).")]
+        [Tooltip("Optional Left column (for odd levels on a page).")]
         [SerializeField] private Transform leftContainer;
 
-        [Tooltip("Optional Right column (for Levels 6..10).")]
+        [Tooltip("Optional Right column (for even levels on a page).")]
         [SerializeField] private Transform rightContainer;
 
+        [Header("Pagination")]
+        [Tooltip("Levels shown per page (default 10).")]
+        [SerializeField] private int levelsPerPage = 10;
+
+        [Tooltip("PREV PAGE button.")]
+        [SerializeField] private Button prevPageButton;
+
+        [Tooltip("NEXT PAGE button.")]
+        [SerializeField] private Button nextPageButton;
+
+        [Tooltip("Optional label showing page info, e.g. 'Page 1 / 2'.")]
+        [SerializeField] private TMPro.TextMeshProUGUI pageLabel;
+
+        // Internal
+        private int currentPage = 0; // 0-indexed
         private readonly List<LevelSelectButton> spawnedButtons = new List<LevelSelectButton>();
 
         private void Awake()
@@ -50,16 +68,24 @@ namespace CarRush.UI
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
 
+            // Wire pagination buttons
+            if (prevPageButton != null)
+                prevPageButton.onClick.AddListener(OnPrevPage);
+            if (nextPageButton != null)
+                nextPageButton.onClick.AddListener(OnNextPage);
+
             BuildList();
         }
+
+        // ── Data loading ──────────────────────────────────────────────────────
 
         private void EnsureLevelsLoaded()
         {
 #if UNITY_EDITOR
-            if (levels == null || levels.Length < 10 || HasNullOrEmpty(levels))
+            if (levels == null || levels.Length < 20 || HasNullOrEmpty(levels))
             {
                 List<LevelData> lvlList = new List<LevelData>();
-                for (int i = 1; i <= 10; i++)
+                for (int i = 1; i <= 20; i++)
                 {
                     LevelData ld = UnityEditor.AssetDatabase.LoadAssetAtPath<LevelData>($"Assets/Settings/LevelData/Level{i}.asset");
                     if (ld != null) lvlList.Add(ld);
@@ -79,6 +105,8 @@ namespace CarRush.UI
             return false;
         }
 
+        // ── Build UI ──────────────────────────────────────────────────────────
+
         public void BuildList()
         {
             EnsureLevelsLoaded();
@@ -90,16 +118,24 @@ namespace CarRush.UI
                 return;
             }
 
-            for (int i = 0; i < levels.Length; i++)
+            int totalPages = GetTotalPages();
+            currentPage = Mathf.Clamp(currentPage, 0, totalPages - 1);
+
+            int startIndex = currentPage * levelsPerPage;
+            int endIndex   = Mathf.Min(startIndex + levelsPerPage, levels.Length);
+
+            for (int i = startIndex; i < endIndex; i++)
             {
                 LevelData data = levels[i];
                 if (data == null) continue;
 
-                // Pick container: Left for 1..5, Right for 6..10
+                // Two-column layout: first half → left, second half → right
+                int pageRelativeIndex = i - startIndex;
+                int half = (endIndex - startIndex + 1) / 2;
                 Transform parent = buttonContainer;
                 if (leftContainer != null && rightContainer != null)
                 {
-                    parent = (i < 5) ? leftContainer : rightContainer;
+                    parent = (pageRelativeIndex < half) ? leftContainer : rightContainer;
                 }
 
                 bool unlocked = SaveManager.IsLevelUnlocked(data.levelNumber);
@@ -120,9 +156,11 @@ namespace CarRush.UI
                 spawnedButtons.Add(row);
             }
 
+            UpdatePaginationButtons();
+
             // Force layout rebuild
             Canvas.ForceUpdateCanvases();
-            if (leftContainer is RectTransform lrt) LayoutRebuilder.ForceRebuildLayoutImmediate(lrt);
+            if (leftContainer  is RectTransform lrt) LayoutRebuilder.ForceRebuildLayoutImmediate(lrt);
             if (rightContainer is RectTransform rrt) LayoutRebuilder.ForceRebuildLayoutImmediate(rrt);
             if (buttonContainer is RectTransform brt) LayoutRebuilder.ForceRebuildLayoutImmediate(brt);
         }
@@ -137,10 +175,53 @@ namespace CarRush.UI
             spawnedButtons.Clear();
         }
 
+        // ── Pagination ────────────────────────────────────────────────────────
+
+        private int GetTotalPages()
+        {
+            if (levels == null || levels.Length == 0) return 1;
+            return Mathf.CeilToInt((float)levels.Length / levelsPerPage);
+        }
+
+        private void UpdatePaginationButtons()
+        {
+            int totalPages = GetTotalPages();
+
+            if (prevPageButton != null)
+                prevPageButton.interactable = currentPage > 0;
+
+            if (nextPageButton != null)
+                nextPageButton.interactable = currentPage < totalPages - 1;
+
+            if (pageLabel != null)
+                pageLabel.text = $"Page {currentPage + 1} / {totalPages}";
+        }
+
+        public void OnPrevPage()
+        {
+            if (currentPage > 0)
+            {
+                currentPage--;
+                BuildList();
+            }
+        }
+
+        public void OnNextPage()
+        {
+            if (currentPage < GetTotalPages() - 1)
+            {
+                currentPage++;
+                BuildList();
+            }
+        }
+
+        // ── Actions ───────────────────────────────────────────────────────────
+
         /// <summary>Resets player progression back to Level 1 and refreshes the UI instantly.</summary>
         public void OnResetProgressPressed()
         {
             SaveManager.ResetProgress();
+            currentPage = 0;
             BuildList();
             Debug.Log("<color=yellow><b>[LevelSelectUI] Progression reset! Only Level 1 is unlocked.</b></color>");
         }

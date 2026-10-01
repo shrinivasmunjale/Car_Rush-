@@ -41,10 +41,10 @@ namespace CarRush.Car
         [SerializeField] private float maxSpeedKmh = 160f;
 
         [Tooltip("Max steering angle at low speeds.")]
-        [SerializeField] private float maxSteerAngle = 32f;
+        [SerializeField] private float maxSteerAngle = 38f;
 
         [Tooltip("Steering angle at top speed (prevents oversteering).")]
-        [SerializeField] private float highSpeedSteerAngle = 12f;
+        [SerializeField] private float highSpeedSteerAngle = 14f;
 
         [Header("Physics Stability")]
         [Tooltip("Center of mass offset (Y should be negative to prevent rollovers).")]
@@ -66,11 +66,21 @@ namespace CarRush.Car
         public float SteerInput => currentSteerInput;
         public bool IsBraking => currentThrottleInput < 0f || isHandbraking;
         public Rigidbody Rigidbody => rb;
+        public WheelCollider FrontLeftCollider => frontLeftWheel.collider;
+        public WheelCollider FrontRightCollider => frontRightWheel.collider;
+        public WheelCollider RearLeftCollider => rearLeftWheel.collider;
+        public WheelCollider RearRightCollider => rearRightWheel.collider;
 
         private void Awake()
         {
             rb = GetComponent<Rigidbody>();
             rb.centerOfMass = centerOfMassOffset;
+
+            // Automatically attach TireMarks component if missing
+            if (GetComponent<TireMarks>() == null)
+            {
+                gameObject.AddComponent<TireMarks>();
+            }
         }
 
         private void Update()
@@ -102,8 +112,8 @@ namespace CarRush.Car
             {
                 if (keyboard.wKey.isPressed || keyboard.upArrowKey.isPressed) targetThrottle += 1f;
                 if (keyboard.sKey.isPressed || keyboard.downArrowKey.isPressed) targetThrottle -= 1f;
-                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) targetSteer += 1f;
-                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) targetSteer -= 1f;
+                if (keyboard.dKey.isPressed || keyboard.rightArrowKey.isPressed) targetSteer += 1.5f;
+                if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) targetSteer -= 1.5f;
                 if (keyboard.spaceKey.isPressed) handbrake = true;
             }
 
@@ -122,8 +132,8 @@ namespace CarRush.Car
             targetSteer = Mathf.Clamp(targetSteer, -1f, 1f);
             targetThrottle = Mathf.Clamp(targetThrottle, -1f, 1f);
 
-            // Smoothly interpolate steering with fast, responsive auto-centering (prevents pulling or sticking)
-            currentSteerInput = Mathf.MoveTowards(currentSteerInput, targetSteer, Time.deltaTime * 12f);
+            // Smoothly interpolate steering with fast, responsive auto-centering (increased for fast left-right response)
+            currentSteerInput = Mathf.MoveTowards(currentSteerInput, targetSteer, Time.deltaTime * 26f);
             currentThrottleInput = targetThrottle;
             isHandbraking = handbrake;
         }
@@ -249,9 +259,32 @@ namespace CarRush.Car
             {
                 rb.linearVelocity = Vector3.zero;
                 rb.angularVelocity = Vector3.zero;
+                rb.position = position;
+                rb.rotation = rotation;
             }
             transform.position = position;
             transform.rotation = rotation;
+            Physics.SyncTransforms();
+
+            // Reset inputs & wheel states
+            currentSteerInput = 0f;
+            currentThrottleInput = 0f;
+            isHandbraking = false;
+            ResetWheel(frontLeftWheel);
+            ResetWheel(frontRightWheel);
+            ResetWheel(rearLeftWheel);
+            ResetWheel(rearRightWheel);
+            UpdateWheelMeshes();
+        }
+
+        private void ResetWheel(WheelInfo wheel)
+        {
+            if (wheel.collider != null)
+            {
+                wheel.collider.motorTorque = 0f;
+                wheel.collider.brakeTorque = 0f;
+                wheel.collider.steerAngle = 0f;
+            }
         }
     }
 }

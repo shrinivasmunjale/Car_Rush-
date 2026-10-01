@@ -97,8 +97,9 @@ namespace CarRush.Editor
             SetWheelInfo(so, "rearRightWheel", rrCol, rrMesh, true, false);
             so.ApplyModifiedProperties();
 
-            // 4. CarAudio Component
+            // 4. CarAudio & TireMarks Components
             carRoot.AddComponent<CarAudio>();
+            carRoot.AddComponent<TireMarks>();
 
             // Save Prefab
             GameObject prefab = PrefabUtility.SaveAsPrefabAsset(carRoot, CarPrefabPath);

@@ -1,3 +1,4 @@
+using CarRush.Game;
 using UnityEngine;
 #if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
@@ -60,16 +61,66 @@ namespace CarRush.Car
         private float currentSteerInput;
         private float currentThrottleInput;
         private bool isHandbraking;
+        private bool isControlEnabled = true;
+        private bool isStopped = false;
 
         public float CurrentSpeedKmh => rb != null ? rb.linearVelocity.magnitude * 3.6f : 0f;
         public float ThrottleInput => currentThrottleInput;
         public float SteerInput => currentSteerInput;
-        public bool IsBraking => currentThrottleInput < 0f || isHandbraking;
+        public bool IsBraking => currentThrottleInput < 0f || isHandbraking || isStopped;
+        public bool IsControlEnabled => isControlEnabled;
+        public bool IsStopped => isStopped;
         public Rigidbody Rigidbody => rb;
         public WheelCollider FrontLeftCollider => frontLeftWheel.collider;
         public WheelCollider FrontRightCollider => frontRightWheel.collider;
         public WheelCollider RearLeftCollider => rearLeftWheel.collider;
         public WheelCollider RearRightCollider => rearRightWheel.collider;
+
+        /// <summary>
+        /// Enables or disables user control over the car.
+        /// </summary>
+        public void SetControlEnabled(bool enabled)
+        {
+            isControlEnabled = enabled;
+            if (!enabled)
+            {
+                currentSteerInput = 0f;
+                currentThrottleInput = 0f;
+                isHandbraking = false;
+            }
+            else
+            {
+                isStopped = false;
+            }
+        }
+
+        /// <summary>
+        /// Emergency stops the car and permanently disables user control (e.g. when time expires).
+        /// </summary>
+        public void StopAndDisableControl()
+        {
+            isControlEnabled = false;
+            isStopped = true;
+            currentSteerInput = 0f;
+            currentThrottleInput = 0f;
+            isHandbraking = true;
+
+            ApplyTorqueToWheel(frontLeftWheel, 0f, brakeTorque);
+            ApplyTorqueToWheel(frontRightWheel, 0f, brakeTorque);
+            ApplyTorqueToWheel(rearLeftWheel, 0f, handbrakeTorque);
+            ApplyTorqueToWheel(rearRightWheel, 0f, handbrakeTorque);
+        }
+
+        /// <summary>
+        /// Gently stops the car (e.g. after crossing finish line).
+        /// </summary>
+        public void StopCar()
+        {
+            isStopped = true;
+            currentThrottleInput = 0f;
+            currentSteerInput = 0f;
+            isHandbraking = true;
+        }
 
         private void Awake()
         {
@@ -91,6 +142,26 @@ namespace CarRush.Car
 
         private void FixedUpdate()
         {
+            // If time is up or emergency stop is engaged, swiftly bring the car to a full stop
+            bool timeExpired = RaceManager.Instance != null && RaceManager.Instance.CurrentState == RaceState.TimeUp;
+            if (isStopped || timeExpired)
+            {
+                isStopped = true;
+                isControlEnabled = false;
+                isHandbraking = true;
+
+                if (rb != null)
+                {
+                    rb.linearVelocity = Vector3.MoveTowards(rb.linearVelocity, Vector3.zero, Time.fixedDeltaTime * 35f);
+                    rb.angularVelocity = Vector3.MoveTowards(rb.angularVelocity, Vector3.zero, Time.fixedDeltaTime * 25f);
+                    if (rb.linearVelocity.sqrMagnitude < 0.05f)
+                    {
+                        rb.linearVelocity = Vector3.zero;
+                        rb.angularVelocity = Vector3.zero;
+                    }
+                }
+            }
+
             ApplyMotorAndBrakes();
             ApplySteering();
             ApplyAntiRoll(frontLeftWheel.collider, frontRightWheel.collider);
@@ -100,6 +171,16 @@ namespace CarRush.Car
 
         private void ReadInput()
         {
+            // Reject any input if controls are disabled or race is over / time is up
+            bool timeExpired = RaceManager.Instance != null && RaceManager.Instance.CurrentState == RaceState.TimeUp;
+            if (!isControlEnabled || timeExpired)
+            {
+                currentSteerInput = 0f;
+                currentThrottleInput = 0f;
+                isHandbraking = isStopped || timeExpired;
+                return;
+            }
+
             float targetSteer = 0f;
             float targetThrottle = 0f;
             bool handbrake = false;
@@ -140,6 +221,15 @@ namespace CarRush.Car
 
         private void ApplyMotorAndBrakes()
         {
+            if (isStopped)
+            {
+                ApplyTorqueToWheel(frontLeftWheel, 0f, brakeTorque);
+                ApplyTorqueToWheel(frontRightWheel, 0f, brakeTorque);
+                ApplyTorqueToWheel(rearLeftWheel, 0f, handbrakeTorque);
+                ApplyTorqueToWheel(rearRightWheel, 0f, handbrakeTorque);
+                return;
+            }
+
             float speed = CurrentSpeedKmh;
             float speedFactor = Mathf.Clamp01(speed / maxSpeedKmh);
 

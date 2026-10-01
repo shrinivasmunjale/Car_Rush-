@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 19
   levelName: Ghost Circuit
   sceneName: Level19
-  timeLimit: 22
+  timeLimit: 75
   difficulty: 4
   checkpointCount: 11

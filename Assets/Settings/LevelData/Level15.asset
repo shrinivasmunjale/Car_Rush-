@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 15
   levelName: Phantom Highway
   sceneName: Level15
-  timeLimit: 68
+  timeLimit: 28
   difficulty: 4
   checkpointCount: 10

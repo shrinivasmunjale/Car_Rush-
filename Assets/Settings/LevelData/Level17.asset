@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 17
   levelName: Thunder Valley
   sceneName: Level17
-  timeLimit: 73
+  timeLimit: 26
   difficulty: 4
   checkpointCount: 10

@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 12
   levelName: Neon Underground
   sceneName: Level12
-  timeLimit: 58
+  timeLimit: 45
   difficulty: 4
-  checkpointCount: 9
+  checkpointCount:11

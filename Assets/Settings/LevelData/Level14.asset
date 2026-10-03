@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 14
   levelName: Arctic Drift
   sceneName: Level14
-  timeLimit: 65
+  timeLimit: 30
   difficulty: 4
   checkpointCount: 9

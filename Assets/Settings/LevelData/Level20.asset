@@ -15,6 +15,6 @@ MonoBehaviour:
   levelNumber: 20
   levelName: Apex Limit
   sceneName: Level20
-  timeLimit: 82
+  timeLimit: 20
   difficulty: 4
   checkpointCount: 12
